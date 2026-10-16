@@ -1,0 +1,533 @@
+@use '../../../styles/mixins' as *;
+
+/* Ledger view: a summary strip of per-provider totals above flat credential rows.
+ * Rows share one column grid per provider group so the same limit lines up. */
+
+$hairline: color-mix(in srgb, var(--text-primary) 8%, transparent);
+$meter-width: 159px;
+$meter-gap: 21px;
+
+.ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+
+/* ---------- summary strip ---------- */
+
+.summary {
+  display: grid;
+  border: 1px solid $hairline;
+  border-radius: 14px;
+  background: var(--bg-quinary);
+  overflow: hidden;
+}
+
+.summaryColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 13px 17px 13px 16px;
+
+  & + & {
+    border-left: 1px solid color-mix(in srgb, var(--text-primary) 4%, transparent);
+  }
+}
+
+.summaryHead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  margin-bottom: 11px;
+}
+
+.providerIcon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
+
+  img {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+  }
+}
+
+.providerIconFallback {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.summaryName {
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  @include text-ellipsis;
+}
+
+.summaryCount {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-quaternary);
+}
+
+.summaryLabel {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--text-tertiary);
+  @include text-ellipsis;
+}
+
+.summaryTotal {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.summaryValue {
+  font-size: 26px;
+  line-height: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.summaryOf {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryEmpty {
+  font-size: 12px;
+  color: var(--text-quaternary);
+}
+
+.segments {
+  display: flex;
+  gap: 4px;
+  margin: 7px 0 10px;
+}
+
+.summarySecondary {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 13px;
+  padding-top: 9px;
+  border-top: 1px solid $hairline;
+
+  .segments {
+    margin: 6px 0 7px;
+  }
+}
+
+.secondaryLine {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-right: 48px;
+  font-size: 11px;
+  line-height: 17px;
+}
+
+.secondaryLabel {
+  color: var(--text-tertiary);
+  @include text-ellipsis;
+}
+
+.secondaryValue {
+  flex-shrink: 0;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.secondaryToggle {
+  position: absolute;
+  top: 9px;
+  right: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 10.5px;
+  line-height: 17px;
+  color: var(--text-quaternary);
+  cursor: pointer;
+  transition: color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+
+  &:hover {
+    color: var(--text-secondary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* ---------- bars (shared by summary segments and row meters) ---------- */
+
+.track {
+  position: relative;
+  flex: 1 1 0;
+  display: block;
+  height: 5px;
+  border-radius: $radius-full;
+  background: color-mix(in srgb, var(--text-primary) 9%, transparent);
+  overflow: hidden;
+}
+
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  transition: width 360ms var(--ease-out-strong, ease);
+}
+
+.toneHigh {
+  background: var(--viz-success);
+}
+
+.toneMedium {
+  background: var(--quota-medium-color);
+}
+
+.toneLow {
+  background: var(--viz-failure);
+}
+
+/* ---------- reset line ---------- */
+
+.reset,
+.resetNone {
+  font-size: 11px;
+  line-height: 15px;
+  font-variant-numeric: tabular-nums;
+  @include text-ellipsis;
+}
+
+.resetRelative {
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.resetAbsolute {
+  color: var(--text-quaternary);
+}
+
+.dot {
+  margin: 0 4px;
+  color: var(--text-quaternary);
+}
+
+.resetNone {
+  color: var(--text-quaternary);
+}
+
+/* ---------- provider groups ---------- */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.groupTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 1px;
+  line-height: 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.groupCount {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-quaternary);
+  font-variant-numeric: tabular-nums;
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: $meter-gap;
+  min-height: 74px;
+  padding: 12px 9px 12px 0;
+  transition: background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+
+  & + & {
+    border-top: 1px solid $hairline;
+  }
+
+  &:hover {
+    background: var(--bg-quinary);
+  }
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 0 0 245px;
+  min-width: 0;
+}
+
+.fileName {
+  font-family: $font-mono;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+  @include text-ellipsis;
+}
+
+.plan {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  @include text-ellipsis;
+
+  .dot {
+    margin: 0 4px;
+  }
+}
+
+.planPremium {
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.planDate {
+  color: var(--text-secondary);
+}
+
+.detailHead {
+  margin-bottom: 4px;
+}
+
+.detailValue {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+  line-height: 17px;
+  white-space: nowrap;
+
+  strong {
+    font-size: 13.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+  }
+  height: 17px;
+}
+
+.detailSuffix {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.meters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px $meter-gap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.meter {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 $meter-width;
+  min-width: 0;
+}
+
+.meterDimmed {
+  opacity: 0.55;
+}
+
+.meterHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  line-height: 17px;
+  height: 17px;
+}
+
+.fileName,
+.plan {
+  line-height: 17px;
+}
+
+.meterLabel {
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  @include text-ellipsis;
+}
+
+.meterValue {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.meter .track {
+  flex: 0 0 auto;
+  margin-bottom: 5px;
+}
+
+.meterSkeleton {
+  flex: 0 0 $meter-width;
+  height: 46px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+  animation: ledger-pulse 1.2s ease-in-out infinite;
+}
+
+.rowHint {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  color: var(--text-quaternary);
+
+  &:is(button):not(:disabled) {
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-secondary);
+    }
+  }
+}
+
+.rowError {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--viz-failure);
+  @include text-ellipsis;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-quaternary);
+  cursor: pointer;
+  transition: color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+
+  &:hover:not(:disabled) {
+    color: var(--text-primary);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+.spinning {
+  animation: ledger-spin 0.8s linear infinite;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@keyframes ledger-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ledger-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@include mobile {
+  .row {
+    flex-wrap: wrap;
+  }
+
+  .identity {
+    flex-basis: 100%;
+  }
+
+  .actions {
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .secondaryToggle,
+  .action,
+  .row {
+    transition: none;
+  }
+
+  .spinning,
+  .meterSkeleton {
+    animation: none;
+  }
+}

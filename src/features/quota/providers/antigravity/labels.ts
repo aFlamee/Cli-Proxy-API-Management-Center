@@ -5,6 +5,9 @@
  * 归一化后的文案匹配，匹配不到再回落到结构化的 `window` 字段。
  */
 
+import type { TFunction } from 'i18next';
+import type { AntigravityQuotaSubscription } from '@/types';
+
 const GROUP_LABEL_KEYS = new Map<string, string>([
   ['gemini models', 'group_gemini_models'],
   ['claude and gpt models', 'group_claude_gpt_models'],
@@ -113,3 +116,20 @@ export function shouldShowAntigravityQuotaAvailable(
       item.remainingFraction <= 0
   );
 }
+
+/** Display name for an Antigravity subscription; shared by the card and the ledger row. */
+export const antigravityPlanLabel = (
+  subscription: AntigravityQuotaSubscription | null | undefined,
+  t: TFunction
+): string | null => {
+  if (!subscription) return null;
+  if (subscription.plan === 'free') return t('antigravity_subscription.plan_free');
+  if (subscription.plan === 'pro') return t('antigravity_subscription.plan_pro');
+  if (subscription.plan === 'ultra') return t('antigravity_subscription.plan_ultra');
+  if (subscription.plan === 'ultra-lite') return t('antigravity_subscription.plan_ultra_lite');
+  return (
+    subscription.tierName ||
+    subscription.tierId ||
+    (subscription.plan === 'unknown' ? t('antigravity_subscription.plan_unknown') : null)
+  );
+};

@@ -10,6 +10,9 @@ export type QuotaHeaderProps = {
   refreshing: boolean;
   disableControls: boolean;
   onRefreshAll: () => void;
+  /** Ledger only: whether credential names show full email addresses. */
+  emailsVisible?: boolean;
+  onToggleEmails?: () => void;
 };
 
 /**
@@ -20,8 +23,16 @@ export type QuotaHeaderProps = {
  * （标题 0ms → meta 70ms → 动作 140ms → tabs 210ms）。
  */
 export function QuotaHeader(props: QuotaHeaderProps) {
-  const { totalCount, loadedCount, attentionCount, refreshing, disableControls, onRefreshAll } =
-    props;
+  const {
+    totalCount,
+    loadedCount,
+    attentionCount,
+    refreshing,
+    disableControls,
+    onRefreshAll,
+    emailsVisible = false,
+    onToggleEmails,
+  } = props;
   const { t } = useTranslation();
   // 批量结果陆续落地时，「已加载」是页面上唯一滚动的数字
   const displayLoadedCount = useCountUp(loadedCount);
@@ -55,6 +66,16 @@ export function QuotaHeader(props: QuotaHeaderProps) {
         </p>
       </div>
       <div className={styles.actions} data-reveal>
+        {onToggleEmails && (
+          <button
+            type="button"
+            className={styles.secondaryAction}
+            aria-pressed={emailsVisible}
+            onClick={onToggleEmails}
+          >
+            {t(emailsVisible ? 'quota_management.hide_emails' : 'quota_management.show_emails')}
+          </button>
+        )}
         <button
           type="button"
           className={styles.primaryAction}

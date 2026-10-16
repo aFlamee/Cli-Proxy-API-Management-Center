@@ -10,7 +10,12 @@ import {
 } from '@/utils/quota';
 
 describe('Codex Pro display names', () => {
-  for (const [locale, messages] of Object.entries({ en, 'zh-CN': zhCN, 'zh-TW': zhTW, ru })) {
+  test('en labels Pro plans by usage multiple', () => {
+    expect(en.codex_quota.plan_prolite).toBe('Pro 5x');
+    expect(en.codex_quota.plan_pro).toBe('Pro 20x');
+  });
+
+  for (const [locale, messages] of Object.entries({ 'zh-CN': zhCN, 'zh-TW': zhTW, ru })) {
     test(`${locale} labels Pro plans as Pro 100 and Pro 200`, () => {
       expect(messages.codex_quota.plan_prolite).toBe('Pro 100');
       expect(messages.codex_quota.plan_pro).toBe('Pro 200');

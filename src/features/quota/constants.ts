@@ -22,5 +22,19 @@ export const QUOTA_SORT_MODES = ['default', 'soonest'] as const;
 
 export type QuotaSortMode = (typeof QUOTA_SORT_MODES)[number];
 
+/** Page layouts: ledger = summary strip + compact rows (default); cards = the card grid. */
+export const QUOTA_VIEW_MODES = ['ledger', 'cards'] as const;
+
+export type QuotaViewMode = (typeof QUOTA_VIEW_MODES)[number];
+
+/** Provider tabs shown even when empty; the others appear once they have credentials. */
+export const QUOTA_PINNED_TABS: readonly QuotaProviderType[] = [
+  'claude',
+  'antigravity',
+  'codex',
+  'xai',
+  'kimi',
+];
+
 /** 与 useRevealGroup 的 GROUP_MAX_TOTAL 一致：卡片级联总预算 360ms。 */
 export const CARD_ENTRANCE_BUDGET_MS = 360;

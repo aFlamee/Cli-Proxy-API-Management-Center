@@ -11,7 +11,7 @@ describe('quota toolbar presentation contracts', () => {
     expect(source).toContain('{search && (');
     expect(source).toContain("aria-label={t('quota_management.search_clear')}");
     expect(source).toContain(
-      "handleSearchChange('');\n                  searchInputRef.current?.focus();"
+      "handleSearchChange('');\n                    searchInputRef.current?.focus();"
     );
     expect(source).toContain('<IconX size={14} aria-hidden="true" />');
     expect(styles).toMatch(/&::-webkit-search-cancel-button,[\s\S]*?appearance: none;/);
@@ -20,7 +20,10 @@ describe('quota toolbar presentation contracts', () => {
   test('groups search and sorting separately from provider navigation', () => {
     const toolbarStart = source.indexOf('<div className={styles.toolbar}>');
     const searchStart = source.indexOf('<div className={styles.search}>');
-    const sortStart = source.indexOf('<div className={styles.sort}>');
+    // The sort control is built once and placed in the cards toolbar after search
+    // (and beside the view picker in the ledger view, which has no search box).
+    const sortStart = source.indexOf('{sortSelect}', toolbarStart);
+    expect(source).toContain('<div className={styles.sort}>');
     expect(toolbarStart).toBeGreaterThan(source.indexOf('<ProviderTabs'));
     expect(searchStart).toBeGreaterThan(toolbarStart);
     expect(sortStart).toBeGreaterThan(searchStart);

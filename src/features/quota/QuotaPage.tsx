@@ -1,5 +1,5 @@
 /**
- * 额度查询页：提供商 tabs + 统一卡网格。
+ * 额度查询页：提供商 tabs + 两种视图（ledger = 汇总条 + 紧凑行，默认；cards = 统一卡网格）。
  *
  * 保留的行为契约（重设计不改）：
  * - 现有提供商保持点击加载；Devin 首次可见时主动查询一次，不轮询；
@@ -25,14 +25,18 @@ import { getQuotaCacheKey } from '@/utils/quota/identity';
 import { ProviderTabs } from '@/features/authFiles/components/ProviderTabs';
 import { QuotaHeader } from './components/QuotaHeader';
 import { QuotaCard } from './components/QuotaCard';
+import { QuotaLedger } from './components/QuotaLedger';
 import { QuotaTimeline } from './components/QuotaTimeline';
 import {
   CARD_ENTRANCE_BUDGET_MS,
   QUOTA_PAGE_SIZE,
+  QUOTA_PINNED_TABS,
   QUOTA_SORT_MODES,
   QUOTA_TAB_ORDER,
+  QUOTA_VIEW_MODES,
   type QuotaSortMode,
   type QuotaTabId,
+  type QuotaViewMode,
 } from './constants';
 import {
   buildTabCounts,
@@ -53,8 +57,8 @@ import { useQuotaBatchLoader } from './hooks/useQuotaBatchLoader';
 import { readQuotaUiState, writeQuotaUiState } from './uiState';
 import styles from './QuotaPage.module.scss';
 
-const TAB_IDS: string[] = ['all', ...QUOTA_TAB_ORDER];
 const SKELETON_CARD_COUNT = 6;
+const SKELETON_ROW_COUNT = 4;
 
 /**
  * Existing providers display filenames; Devin's card and timeline share an
@@ -74,6 +78,9 @@ export function QuotaPage() {
   const [sortMode, setSortMode] = useState<QuotaSortMode>(
     () => readQuotaUiState()?.sortMode ?? 'default'
   );
+  const [view, setView] = useState<QuotaViewMode>(() => readQuotaUiState()?.view ?? 'ledger');
+  // Masked by default and never persisted: emails stay hidden on every visit.
+  const [showEmails, setShowEmails] = useState(false);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -174,9 +181,21 @@ export function QuotaPage() {
 
   const entries = useMemo(() => classifyQuotaFiles(files), [files]);
   const tabCounts = useMemo(() => buildTabCounts(entries), [entries]);
+  // Keep the strip short: providers outside the pinned set appear once they have credentials.
+  const tabIds = useMemo(
+    () => [
+      'all',
+      ...QUOTA_TAB_ORDER.filter(
+        (type) => QUOTA_PINNED_TABS.includes(type) || tabCounts[type] > 0 || tab === type
+      ),
+    ],
+    [tabCounts, tab]
+  );
+  // The ledger has no search box, so a query typed in the cards view must not linger there.
+  const activeSearch = view === 'cards' ? search : '';
   const filteredEntries = useMemo(
-    () => filterEntriesBySearch(filterEntriesByTab(entries, tab), search),
-    [entries, tab, search]
+    () => filterEntriesBySearch(filterEntriesByTab(entries, tab), activeSearch),
+    [entries, tab, activeSearch]
   );
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -209,6 +228,17 @@ export function QuotaPage() {
     setPage(1);
     writeQuotaUiState({ sortMode: next as QuotaSortMode });
   }, []);
+
+  const handleViewChange = useCallback((next: string) => {
+    setView(next as QuotaViewMode);
+    writeQuotaUiState({ view: next as QuotaViewMode });
+  }, []);
+
+  const viewOptions = useMemo(
+    () =>
+      QUOTA_VIEW_MODES.map((mode) => ({ value: mode, label: t(`quota_management.view_${mode}`) })),
+    [t]
+  );
 
   const sortOptions = useMemo(
     () =>
@@ -322,6 +352,19 @@ export function QuotaPage() {
   /* ---------- 渲染 ---------- */
 
   const isEmpty = !loading && filteredEntries.length === 0;
+  const hasSearch = activeSearch.trim() !== '';
+
+  const sortSelect = (
+    <div className={styles.sort}>
+      <Select
+        value={sortMode}
+        options={sortOptions}
+        onChange={handleSortModeChange}
+        ariaLabel={t('quota_management.sort_label')}
+        size="sm"
+      />
+    </div>
+  );
 
   return (
     <div className={styles.page} ref={revealRef}>
@@ -332,57 +375,65 @@ export function QuotaPage() {
         refreshing={loading || batchLoading}
         disableControls={disableControls}
         onRefreshAll={handleRefreshAll}
+        emailsVisible={showEmails}
+        onToggleEmails={view === 'ledger' ? () => setShowEmails((value) => !value) : undefined}
       />
 
       <section className={styles.workbench}>
         {/* 提供商导航与搜索工具栏分层，避免不同控件争夺视觉焦点。 */}
         <div className={styles.tabsRow} data-reveal>
           <ProviderTabs
-            types={TAB_IDS}
+            types={tabIds}
             counts={tabCounts}
             active={tab}
             resolvedTheme={resolvedTheme}
             onChange={handleTabChange}
           />
+          <div className={styles.viewControls}>
+            <div className={styles.viewSelect}>
+              <Select
+                value={view}
+                options={viewOptions}
+                onChange={handleViewChange}
+                ariaLabel={t('quota_management.view_label')}
+                size="sm"
+              />
+            </div>
+            {view === 'ledger' && sortSelect}
+          </div>
         </div>
 
-        <div className={styles.toolbar}>
-          <div className={styles.search}>
-            <IconSearch size={16} className={styles.searchIcon} aria-hidden="true" />
-            <input
-              ref={searchInputRef}
-              className={styles.searchInput}
-              type="search"
-              value={search}
-              onChange={(event) => handleSearchChange(event.target.value)}
-              placeholder={t('quota_management.search_placeholder')}
-              aria-label={t('quota_management.search_label')}
-            />
-            {search && (
-              <button
-                type="button"
-                className={styles.clearSearch}
-                aria-label={t('quota_management.search_clear')}
-                title={t('quota_management.search_clear')}
-                onClick={() => {
-                  handleSearchChange('');
-                  searchInputRef.current?.focus();
-                }}
-              >
-                <IconX size={14} aria-hidden="true" />
-              </button>
-            )}
+        {view === 'cards' && (
+          <div className={styles.toolbar}>
+            <div className={styles.search}>
+              <IconSearch size={16} className={styles.searchIcon} aria-hidden="true" />
+              <input
+                ref={searchInputRef}
+                className={styles.searchInput}
+                type="search"
+                value={search}
+                onChange={(event) => handleSearchChange(event.target.value)}
+                placeholder={t('quota_management.search_placeholder')}
+                aria-label={t('quota_management.search_label')}
+              />
+              {search && (
+                <button
+                  type="button"
+                  className={styles.clearSearch}
+                  aria-label={t('quota_management.search_clear')}
+                  title={t('quota_management.search_clear')}
+                  onClick={() => {
+                    handleSearchChange('');
+                    searchInputRef.current?.focus();
+                  }}
+                >
+                  <IconX size={14} aria-hidden="true" />
+                </button>
+              )}
+            </div>
+            {sortSelect}
           </div>
-          <div className={styles.sort}>
-            <Select
-              value={sortMode}
-              options={sortOptions}
-              onChange={handleSortModeChange}
-              ariaLabel={t('quota_management.sort_label')}
-              size="sm"
-            />
-          </div>
-        </div>
+        )}
 
         {error && (
           <div className={styles.errorBanner} role="alert">
@@ -390,7 +441,14 @@ export function QuotaPage() {
           </div>
         )}
 
-        {loading ? (
+        {loading && view === 'ledger' ? (
+          <div className={styles.ledgerSkeleton} aria-hidden="true">
+            <Skeleton height={190} rounded={14} />
+            {Array.from({ length: SKELETON_ROW_COUNT }, (_, index) => (
+              <Skeleton key={index} height={52} rounded={10} />
+            ))}
+          </div>
+        ) : loading ? (
           <div className={styles.grid} aria-hidden="true">
             {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
               <Skeleton key={index} height={168} rounded={14} />
@@ -399,21 +457,21 @@ export function QuotaPage() {
         ) : isEmpty ? (
           <EmptyState
             title={
-              search.trim()
+              hasSearch
                 ? t('quota_management.search_empty_title')
                 : tab === 'all'
                   ? t('quota_management.empty_title')
                   : t(`${QUOTA_ADAPTERS[tab].i18nPrefix}.empty_title`)
             }
             description={
-              search.trim()
+              hasSearch
                 ? t('quota_management.search_empty_desc')
                 : tab === 'all'
                   ? t('quota_management.empty_desc')
                   : t(`${QUOTA_ADAPTERS[tab].i18nPrefix}.empty_desc`)
             }
             action={
-              search.trim() ? (
+              hasSearch ? (
                 <Button variant="secondary" size="sm" onClick={() => handleSearchChange('')}>
                   {t('quota_management.search_clear')}
                 </Button>
@@ -423,6 +481,17 @@ export function QuotaPage() {
                 </Button>
               )
             }
+          />
+        ) : view === 'ledger' ? (
+          <QuotaLedger
+            entries={pageItems}
+            quotaFor={getQuota}
+            resolvedTheme={resolvedTheme}
+            showEmails={showEmails}
+            canRefresh={(entry) => canUseActions && !entry.file.disabled}
+            onRefresh={(entry) => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
+            resettingKey={resettingQuotaName}
+            onReset={(entry) => resetQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
           />
         ) : (
           <div className={styles.grid}>
