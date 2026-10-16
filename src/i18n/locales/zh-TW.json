@@ -547,7 +547,6 @@
     "reset_confirm_button": "確認重置",
     "reset_not_confirmed": "尚未確認額度重置成功，請重新整理額度後再決定是否重試。",
     "reset_cooldown_failed": "額度已重置，但代理冷卻清除失敗。請在原連線的認證檔案頁面使用「清除冷卻」，不要再次消耗重置卡。",
-
     "reset_success": "已重置「{{name}}」的 Codex 配額",
     "reset_failed": "重置「{{name}}」的 Codex 配額失敗：{{message}}",
     "plan_plus": "Plus",
@@ -1649,7 +1648,22 @@
     "weekday_wed": "三",
     "weekday_thu": "四",
     "weekday_fri": "五",
-    "weekday_sat": "六"
+    "weekday_sat": "六",
+    "view_label": "檢視",
+    "view_ledger": "明細",
+    "view_cards": "卡片",
+    "show_emails": "顯示電子郵件",
+    "hide_emails": "隱藏電子郵件",
+    "ledger_summary_label": "依提供商彙總的額度",
+    "ledger_credentials_other": "{{count}} 個憑證",
+    "ledger_of": "共 {{capacity}}%",
+    "ledger_show": "展開",
+    "ledger_hide": "收合",
+    "ledger_no_reset": "暫無待重置",
+    "ledger_not_loaded": "尚未載入，重新整理後查看彙總。",
+    "ledger_no_limits": "未回傳額度限制",
+    "ledger_available": "可用",
+    "ledger_renews": "續訂於"
   },
   "plugin_management": {
     "title": "插件管理",

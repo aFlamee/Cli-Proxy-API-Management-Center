@@ -30,10 +30,41 @@
   gap: 12px;
   min-width: 0;
 
+  /* 标签条只占自身宽度，底线随之收短；右侧放视图/排序控件。 */
   > :first-child {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-width: 0;
+    border-bottom-color: color-mix(in srgb, var(--text-primary) 8%, transparent);
   }
+}
+
+.viewControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 视图选择：细描边小框（与排序的无框样式区分）。 */
+.viewSelect {
+  width: 120px;
+
+  button[aria-haspopup='listbox'] {
+    height: 28px;
+    padding: 0 11px;
+    border-color: color-mix(in srgb, var(--text-primary) 8%, transparent);
+    border-radius: 9px;
+    background: var(--bg-quinary);
+    box-shadow: none;
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+.ledgerSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .toolbar {

@@ -567,8 +567,8 @@
     "plan_plus": "Plus",
     "plan_team": "Team",
     "plan_free": "Free",
-    "plan_pro": "Pro 200",
-    "plan_prolite": "Pro 100",
+    "plan_pro": "Pro 20x",
+    "plan_prolite": "Pro 5x",
     "plan_business_premium": "Business Premium"
   },
   "devin_quota": {
@@ -1622,7 +1622,23 @@
     "weekday_wed": "Wed",
     "weekday_thu": "Thu",
     "weekday_fri": "Fri",
-    "weekday_sat": "Sat"
+    "weekday_sat": "Sat",
+    "view_label": "View",
+    "view_ledger": "Ledger",
+    "view_cards": "Cards",
+    "show_emails": "Show emails",
+    "hide_emails": "Hide emails",
+    "ledger_summary_label": "Quota totals by provider",
+    "ledger_credentials_one": "{{count}} credential",
+    "ledger_credentials_other": "{{count}} credentials",
+    "ledger_of": "of {{capacity}}%",
+    "ledger_show": "Show",
+    "ledger_hide": "Hide",
+    "ledger_no_reset": "No reset pending",
+    "ledger_not_loaded": "Not loaded yet. Refresh to see totals.",
+    "ledger_no_limits": "No quota limits reported",
+    "ledger_available": "available",
+    "ledger_renews": "renews"
   },
   "plugin_management": {
     "title": "Plugin Management",

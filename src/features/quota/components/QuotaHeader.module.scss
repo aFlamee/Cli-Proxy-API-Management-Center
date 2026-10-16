@@ -77,7 +77,7 @@
 .actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   flex-shrink: 0;
 }
 
@@ -115,7 +115,40 @@
   }
 }
 
+/* 次级描边药丸：与主按钮同高，退居暗面 */
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
+  cursor: pointer;
+  background: var(--bg-quinary);
+  color: var(--text-secondary);
+  border-radius: $radius-full;
+  padding: 9px 17px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  transition:
+    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out),
+    color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
+    border-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
+  .secondaryAction:hover {
+    color: var(--text-primary);
+    border-color: color-mix(in srgb, var(--text-primary) 16%, transparent);
+  }
+
   .primaryAction:hover:not(:disabled) {
     transform: translateY(-1px);
     background: color-mix(in srgb, var(--text-primary) 86%, var(--bg-secondary));
@@ -145,11 +178,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .primaryAction {
+  .primaryAction,
+  .secondaryAction {
     transition: none;
   }
 
-  .primaryAction:active:not(:disabled) {
+  .primaryAction:active:not(:disabled),
+  .secondaryAction:active {
     transform: none;
   }
 
