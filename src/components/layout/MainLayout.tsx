@@ -1014,127 +1014,6 @@ export function MainLayout() {
             {sidebarOpen ? headerIcons.close : headerIcons.menu}
           </Button>
         </div>
-
-        <div className="header-actions floating-actions">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefreshAll}
-            title={t('header.refresh_all')}
-          >
-            {headerIcons.refresh}
-          </Button>
-          <div className={`language-menu ${languageMenuOpen ? 'open' : ''}`} ref={languageMenuRef}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleLanguageMenu}
-              title={t('language.switch')}
-              aria-label={t('language.switch')}
-              aria-haspopup="menu"
-              aria-expanded={languageMenuOpen}
-            >
-              {headerIcons.language}
-            </Button>
-            {languageMenuOpen && (
-              <div
-                className="notification entering language-menu-popover"
-                role="menu"
-                aria-label={t('language.switch')}
-              >
-                {LANGUAGE_ORDER.map((lang) => (
-                  <button
-                    key={lang}
-                    type="button"
-                    className={`language-menu-option ${language === lang ? 'active' : ''}`}
-                    onClick={() => handleLanguageSelect(lang)}
-                    role="menuitemradio"
-                    aria-checked={language === lang}
-                  >
-                    <span>{t(LANGUAGE_LABEL_KEYS[lang])}</span>
-                    {language === lang ? <span className="language-menu-check">✓</span> : null}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className={`theme-menu ${themeMenuOpen ? 'open' : ''}`} ref={themeMenuRef}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleThemeMenu}
-              title={t('theme.switch')}
-              aria-label={t('theme.switch')}
-              aria-haspopup="menu"
-              aria-expanded={themeMenuOpen}
-            >
-              {theme === 'auto'
-                ? headerIcons.autoTheme
-                : theme === 'dark'
-                  ? headerIcons.moon
-                  : theme === 'white'
-                    ? headerIcons.whiteTheme
-                    : headerIcons.sun}
-            </Button>
-            {themeMenuOpen && (
-              <div
-                className="notification entering theme-menu-popover"
-                role="menu"
-                aria-label={t('theme.switch')}
-              >
-                {THEME_CARDS.map((tc) => (
-                  <button
-                    key={tc.key}
-                    type="button"
-                    className={`theme-card ${theme === tc.key ? 'active' : ''}`}
-                    onClick={() => handleThemeSelect(tc.key)}
-                    role="menuitemradio"
-                    aria-checked={theme === tc.key}
-                  >
-                    <div
-                      className="theme-card-preview"
-                      style={{
-                        background: tc.colors.bg,
-                        border: `1px solid ${tc.colors.border}`,
-                      }}
-                    >
-                      <div
-                        className="theme-card-header"
-                        style={{
-                          background: tc.colors.card,
-                          borderBottom: `1px solid ${tc.colors.border}`,
-                        }}
-                      />
-                      <div className="theme-card-body">
-                        <div
-                          className="theme-card-sidebar"
-                          style={{
-                            background: tc.colors.card,
-                            borderRight: `1px solid ${tc.colors.border}`,
-                          }}
-                        />
-                        <div className="theme-card-content" style={{ background: tc.colors.bg }}>
-                          <div
-                            className="theme-card-line"
-                            style={{ background: tc.colors.textMuted }}
-                          />
-                          <div
-                            className="theme-card-line short"
-                            style={{ background: tc.colors.textMuted }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <span className="theme-card-label">{t(tc.labelKey)}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <Button variant="ghost" size="sm" onClick={logout} title={t('header.logout')}>
-            {headerIcons.logout}
-          </Button>
-        </div>
       </header>
 
       <div className="main-body">
@@ -1156,7 +1035,6 @@ export function MainLayout() {
               {showSidebarLabels && (
                 <span className="sidebar-brand-text">
                   <span className="sidebar-brand-title">{abbrBrandName}</span>
-                  <span className="sidebar-brand-subtitle">{t('sidebar.subtitle')}</span>
                 </span>
               )}
             </div>
@@ -1164,15 +1042,138 @@ export function MainLayout() {
 
           <div className="nav-section">
             {navGroups.map((group, idx) => (
-              <div className="nav-group" key={group.id}>
-                {showSidebarLabels ? (
-                  <div className="nav-group-label">{t(group.labelKey)}</div>
-                ) : (
-                  idx > 0 && <div className="nav-group-divider" aria-hidden="true" />
+              // Groups read by spacing; the label stays for assistive tech.
+              <div className="nav-group" key={group.id} role="group" aria-label={t(group.labelKey)}>
+                {!showSidebarLabels && idx > 0 && (
+                  <div className="nav-group-divider" aria-hidden="true" />
                 )}
                 {group.items.map((item) => renderNavItem(item))}
               </div>
             ))}
+          </div>
+
+          <div className="sidebar-footer">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefreshAll}
+              title={t('header.refresh_all')}
+            >
+              {headerIcons.refresh}
+            </Button>
+            <div
+              className={`language-menu ${languageMenuOpen ? 'open' : ''}`}
+              ref={languageMenuRef}
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleLanguageMenu}
+                title={t('language.switch')}
+                aria-label={t('language.switch')}
+                aria-haspopup="menu"
+                aria-expanded={languageMenuOpen}
+              >
+                {headerIcons.language}
+              </Button>
+              {languageMenuOpen && (
+                <div
+                  className="notification entering language-menu-popover"
+                  role="menu"
+                  aria-label={t('language.switch')}
+                >
+                  {LANGUAGE_ORDER.map((lang) => (
+                    <button
+                      key={lang}
+                      type="button"
+                      className={`language-menu-option ${language === lang ? 'active' : ''}`}
+                      onClick={() => handleLanguageSelect(lang)}
+                      role="menuitemradio"
+                      aria-checked={language === lang}
+                    >
+                      <span>{t(LANGUAGE_LABEL_KEYS[lang])}</span>
+                      {language === lang ? <span className="language-menu-check">✓</span> : null}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className={`theme-menu ${themeMenuOpen ? 'open' : ''}`} ref={themeMenuRef}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleThemeMenu}
+                title={t('theme.switch')}
+                aria-label={t('theme.switch')}
+                aria-haspopup="menu"
+                aria-expanded={themeMenuOpen}
+              >
+                {theme === 'auto'
+                  ? headerIcons.autoTheme
+                  : theme === 'dark'
+                    ? headerIcons.moon
+                    : theme === 'white'
+                      ? headerIcons.whiteTheme
+                      : headerIcons.sun}
+              </Button>
+              {themeMenuOpen && (
+                <div
+                  className="notification entering theme-menu-popover"
+                  role="menu"
+                  aria-label={t('theme.switch')}
+                >
+                  {THEME_CARDS.map((tc) => (
+                    <button
+                      key={tc.key}
+                      type="button"
+                      className={`theme-card ${theme === tc.key ? 'active' : ''}`}
+                      onClick={() => handleThemeSelect(tc.key)}
+                      role="menuitemradio"
+                      aria-checked={theme === tc.key}
+                    >
+                      <div
+                        className="theme-card-preview"
+                        style={{
+                          background: tc.colors.bg,
+                          border: `1px solid ${tc.colors.border}`,
+                        }}
+                      >
+                        <div
+                          className="theme-card-header"
+                          style={{
+                            background: tc.colors.card,
+                            borderBottom: `1px solid ${tc.colors.border}`,
+                          }}
+                        />
+                        <div className="theme-card-body">
+                          <div
+                            className="theme-card-sidebar"
+                            style={{
+                              background: tc.colors.card,
+                              borderRight: `1px solid ${tc.colors.border}`,
+                            }}
+                          />
+                          <div className="theme-card-content" style={{ background: tc.colors.bg }}>
+                            <div
+                              className="theme-card-line"
+                              style={{ background: tc.colors.textMuted }}
+                            />
+                            <div
+                              className="theme-card-line short"
+                              style={{ background: tc.colors.textMuted }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <span className="theme-card-label">{t(tc.labelKey)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" onClick={logout} title={t('header.logout')}>
+              {headerIcons.logout}
+            </Button>
           </div>
         </aside>
 
