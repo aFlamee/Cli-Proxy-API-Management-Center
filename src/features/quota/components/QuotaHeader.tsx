@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { IconRefreshCw } from '@/components/ui/icons';
+import { IconEye, IconEyeOff, IconRefreshCw } from '@/components/ui/icons';
 import { useCountUp } from '@/hooks/motion';
 import styles from './QuotaHeader.module.scss';
 
@@ -10,14 +10,14 @@ export type QuotaHeaderProps = {
   refreshing: boolean;
   disableControls: boolean;
   onRefreshAll: () => void;
-  /** Ledger only: whether credential names show full email addresses. */
+  /** Ledger and pool: whether credential names show full email addresses. */
   emailsVisible?: boolean;
   onToggleEmails?: () => void;
 };
 
 /**
- * 额度页头部：标题领衔 + ▍mono 遥测 meta 行 + 墨色药丸「刷新全部」。
- * 与凭证库头部同语汇（无 eyebrow —— ▍游标挂在 meta 行开头）。
+ * Quota page header: the title with its credential counts beside it, then the
+ * email toggle and the ink "Refresh all" button.
  *
  * 入场：三处 `data-reveal` 交给页面壳的 useRevealGroup 统一编排
  * （标题 0ms → meta 70ms → 动作 140ms → tabs 210ms）。
@@ -73,6 +73,7 @@ export function QuotaHeader(props: QuotaHeaderProps) {
             aria-pressed={emailsVisible}
             onClick={onToggleEmails}
           >
+            {emailsVisible ? <IconEyeOff size={16} /> : <IconEye size={16} />}
             {t(emailsVisible ? 'quota_management.hide_emails' : 'quota_management.show_emails')}
           </button>
         )}
@@ -82,7 +83,7 @@ export function QuotaHeader(props: QuotaHeaderProps) {
           onClick={onRefreshAll}
           disabled={disableControls || refreshing}
         >
-          <IconRefreshCw size={14} className={refreshing ? styles.spinning : undefined} />
+          <IconRefreshCw size={16} className={refreshing ? styles.spinning : undefined} />
           {t('quota_management.refresh_all_credentials')}
         </button>
       </div>

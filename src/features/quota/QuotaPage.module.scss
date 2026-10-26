@@ -30,11 +30,10 @@
   gap: 12px;
   min-width: 0;
 
-  /* 标签条只占自身宽度，底线随之收短；右侧放视图/排序控件。 */
+  /* 标签条只占自身宽度；右侧放视图/排序控件。 */
   > :first-child {
     flex: 0 1 auto;
     min-width: 0;
-    border-bottom-color: color-mix(in srgb, var(--text-primary) 8%, transparent);
   }
 }
 

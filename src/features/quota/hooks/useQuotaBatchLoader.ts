@@ -16,7 +16,29 @@ import { getQuotaCacheKey } from '@/utils/quota/identity';
 import type { QuotaFileEntry } from '../logic';
 import { QUOTA_ADAPTERS, getQuotaSetter, type QuotaCardState } from '../providers';
 import { enrichQuotaInBackground } from '../quotaEnrichment';
+import { recordQuotaFetch } from '../quotaHistory';
 import type { QuotaProviderType } from '../providers/types';
+
+/** Upstream requests in flight per provider; the pool view loads every credential at once. */
+const FETCH_CONCURRENCY = 6;
+
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  limit: number,
+  run: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const index = next;
+      next += 1;
+      results[index] = await run(items[index]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
 
 interface BatchFetchResult {
   name: string;
@@ -65,8 +87,10 @@ export function useQuotaBatchLoader() {
               });
             });
 
-            const results = await Promise.all(
-              entries.map(async ({ file }): Promise<BatchFetchResult> => {
+            const results = await mapWithConcurrency(
+              entries,
+              FETCH_CONCURRENCY,
+              async ({ file }): Promise<BatchFetchResult> => {
                 const cacheKey = getQuotaCacheKey(file);
                 try {
                   const data = await adapter.fetchQuota(file, t);
@@ -81,7 +105,7 @@ export function useQuotaBatchLoader() {
                     errorStatus: getStatusFromError(err),
                   };
                 }
-              })
+              }
             );
 
             if (requestId !== requestIdRef.current) return;
@@ -110,6 +134,7 @@ export function useQuotaBatchLoader() {
             results.forEach((result, index) => {
               const state = committedStates.get(result.cacheKey);
               if (result.status === 'success' && state) {
+                recordQuotaFetch(type, entries[index].file, state, t);
                 void enrichQuotaInBackground(adapter, entries[index].file, result.data, state, t);
               }
             });

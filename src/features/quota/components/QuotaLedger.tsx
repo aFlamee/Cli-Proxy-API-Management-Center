@@ -13,12 +13,7 @@ import { useNow } from '@/hooks/useNow';
 import type { ResolvedTheme } from '@/types';
 import { formatInstantShort, formatRelativeInstant, resolveQuotaErrorMessage } from '@/utils/quota';
 import { getQuotaCacheKey, getQuotaDisplayName } from '@/utils/quota/identity';
-import {
-  getAuthFileIcon,
-  getThemeSurfaceIconBackground,
-  getTypeLabel,
-  isThemeSurfaceIconProvider,
-} from '@/features/authFiles/constants';
+import { getTypeLabel } from '@/features/authFiles/constants';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
 import type { QuotaProviderType } from '../providers/types';
 import { isQuotaRefreshDisabled, type QuotaFileEntry } from '../logic';
@@ -36,6 +31,7 @@ import {
   type LedgerProviderSummary,
 } from '../ledgerModel';
 import { QUOTA_PROGRESS_HIGH_THRESHOLD, QUOTA_PROGRESS_MEDIUM_THRESHOLD } from './QuotaMeter';
+import { QuotaProviderIcon } from './QuotaProviderIcon';
 import styles from './QuotaLedger.module.scss';
 
 export type QuotaLedgerProps = {
@@ -156,34 +152,6 @@ export function QuotaLedger(props: QuotaLedgerProps) {
 
 /* ---------- summary strip ---------- */
 
-function ProviderIcon({
-  provider,
-  resolvedTheme,
-}: {
-  provider: QuotaProviderType;
-  resolvedTheme: ResolvedTheme;
-}) {
-  const { t } = useTranslation();
-  const iconSrc = getAuthFileIcon(provider, resolvedTheme);
-  const label = getTypeLabel(t, provider);
-  return (
-    <span
-      className={styles.providerIcon}
-      style={
-        isThemeSurfaceIconProvider(provider)
-          ? { background: getThemeSurfaceIconBackground(resolvedTheme) }
-          : undefined
-      }
-    >
-      {iconSrc ? (
-        <img src={iconSrc} alt="" />
-      ) : (
-        <span className={styles.providerIconFallback}>{label.slice(0, 1).toUpperCase()}</span>
-      )}
-    </span>
-  );
-}
-
 function SummaryColumn({
   summary,
   resolvedTheme,
@@ -200,7 +168,7 @@ function SummaryColumn({
   return (
     <div className={styles.summaryColumn}>
       <header className={styles.summaryHead}>
-        <ProviderIcon provider={summary.provider} resolvedTheme={resolvedTheme} />
+        <QuotaProviderIcon provider={summary.provider} resolvedTheme={resolvedTheme} />
         <span className={styles.summaryName}>{getTypeLabel(t, summary.provider)}</span>
         <span className={styles.summaryCount}>
           {t('quota_management.ledger_credentials', { count: summary.credentialCount })}

@@ -1,0 +1,176 @@
+/* ============================================================
+ * Pool chart. Geometry in the SVG, every label in HTML.
+ * ============================================================ */
+
+$plot-height: 250px;
+$now-label-space: 26px;
+
+.chart {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  margin: $now-label-space 0 0;
+  min-width: 0;
+}
+
+.yAxis {
+  position: relative;
+  height: $plot-height;
+}
+
+.yLabel {
+  position: absolute;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.area {
+  position: relative;
+  min-width: 0;
+}
+
+.plot {
+  position: relative;
+  height: $plot-height;
+}
+
+.svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.gridLine {
+  stroke: color-mix(in srgb, var(--text-primary) 7%, transparent);
+  stroke-width: 1;
+}
+
+.recordedLine,
+.projectedLine {
+  fill: none;
+  stroke: var(--pool-accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.projectedLine {
+  stroke-dasharray: 6 5;
+  stroke-linecap: butt;
+}
+
+.stopStrong {
+  stop-color: var(--pool-accent);
+  stop-opacity: 0.2;
+}
+
+.stopSoft {
+  stop-color: var(--pool-accent);
+  stop-opacity: 0.09;
+}
+
+.stopClear {
+  stop-color: var(--pool-accent);
+  stop-opacity: 0;
+}
+
+.jumpLabel {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 7px));
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.nowDot,
+.emptyDot {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.nowDot {
+  width: 10px;
+  height: 10px;
+  background: var(--pool-accent);
+  box-shadow: 0 0 0 2px var(--bg-primary);
+}
+
+.emptyDot {
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--text-primary);
+  background: var(--bg-primary);
+}
+
+.emptyLabel {
+  position: absolute;
+  bottom: 14px;
+  transform: translateX(-58%);
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.xAxis {
+  position: relative;
+  height: 32px;
+}
+
+.xLabel {
+  position: absolute;
+  top: 10px;
+  transform: translateX(-50%);
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* The now marker runs from its label above the plot through the day labels. */
+.now {
+  position: absolute;
+  top: -$now-label-space;
+  bottom: 0;
+  width: 0;
+  pointer-events: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    bottom: 0;
+    left: -0.5px;
+    width: 1px;
+    background: color-mix(in srgb, var(--text-primary) 28%, transparent);
+  }
+}
+
+.nowLabel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateX(-50%);
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .xLabel:nth-child(even) {
+    display: none;
+  }
+}

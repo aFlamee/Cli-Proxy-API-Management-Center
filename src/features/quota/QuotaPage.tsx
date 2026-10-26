@@ -26,6 +26,7 @@ import { ProviderTabs } from '@/features/authFiles/components/ProviderTabs';
 import { QuotaHeader } from './components/QuotaHeader';
 import { QuotaCard } from './components/QuotaCard';
 import { QuotaLedger } from './components/QuotaLedger';
+import { QuotaPool } from './components/QuotaPool';
 import { QuotaTimeline } from './components/QuotaTimeline';
 import {
   CARD_ENTRANCE_BUDGET_MS,
@@ -54,6 +55,7 @@ import type { QuotaProviderType } from './providers/types';
 import { useDevinQuotaAutoLoad } from './providers/devin/useDevinQuotaAutoLoad';
 import { useQuotaActions } from './hooks/useQuotaActions';
 import { useQuotaBatchLoader } from './hooks/useQuotaBatchLoader';
+import { usePoolAutoRefresh } from './hooks/usePoolAutoRefresh';
 import { readQuotaUiState, writeQuotaUiState } from './uiState';
 import styles from './QuotaPage.module.scss';
 
@@ -216,6 +218,9 @@ export function QuotaPage() {
     () => paginate(sortedEntries, page, QUOTA_PAGE_SIZE),
     [sortedEntries, page]
   );
+  // The pool sums a whole provider, so it loads and refreshes every credential of the tab.
+  const isPool = view === 'pool';
+  const quotaTargets = isPool ? sortedEntries : pageItems;
 
   const handleTabChange = useCallback((next: string) => {
     setTab(next as QuotaTabId);
@@ -315,13 +320,22 @@ export function QuotaPage() {
         disableControls
       )
     ) {
-      void loadQuota(pageItems);
+      void loadQuota(quotaTargets);
     }
-  }, [disableControls, error, filesGeneration, loading, loadQuota, pageItems, sessionGeneration]);
+  }, [
+    disableControls,
+    error,
+    filesGeneration,
+    loading,
+    loadQuota,
+    quotaTargets,
+    sessionGeneration,
+  ]);
 
   useDevinQuotaAutoLoad(
     pageItems,
-    disableControls ||
+    isPool ||
+      disableControls ||
       loading ||
       batchLoading ||
       Boolean(error) ||
@@ -330,6 +344,13 @@ export function QuotaPage() {
   );
 
   const canUseActions = !disableControls && !loading && filesGeneration === sessionGeneration;
+
+  usePoolAutoRefresh({
+    enabled: isPool && canUseActions && !error,
+    entries: sortedEntries,
+    quotaFor: getQuota,
+    loadQuota,
+  });
 
   /* ---------- 首屏卡片一次性级联入场 ----------
    * 首批数据渲染后立即翻转 cardsAnimated；已挂载的卡片在挂载时捕获过自己的
@@ -376,7 +397,7 @@ export function QuotaPage() {
         disableControls={disableControls}
         onRefreshAll={handleRefreshAll}
         emailsVisible={showEmails}
-        onToggleEmails={view === 'ledger' ? () => setShowEmails((value) => !value) : undefined}
+        onToggleEmails={view !== 'cards' ? () => setShowEmails((value) => !value) : undefined}
       />
 
       <section className={styles.workbench}>
@@ -441,7 +462,7 @@ export function QuotaPage() {
           </div>
         )}
 
-        {loading && view === 'ledger' ? (
+        {loading && view !== 'cards' ? (
           <div className={styles.ledgerSkeleton} aria-hidden="true">
             <Skeleton height={190} rounded={14} />
             {Array.from({ length: SKELETON_ROW_COUNT }, (_, index) => (
@@ -482,6 +503,13 @@ export function QuotaPage() {
               )
             }
           />
+        ) : isPool ? (
+          <QuotaPool
+            entries={sortedEntries}
+            quotaFor={getQuota}
+            resolvedTheme={resolvedTheme}
+            showEmails={showEmails}
+          />
         ) : view === 'ledger' ? (
           <QuotaLedger
             entries={pageItems}
@@ -511,7 +539,7 @@ export function QuotaPage() {
           </div>
         )}
 
-        {!loading && filteredEntries.length > QUOTA_PAGE_SIZE && (
+        {!loading && !isPool && filteredEntries.length > QUOTA_PAGE_SIZE && (
           <div className={styles.pagination}>
             <Button
               variant="secondary"
@@ -540,12 +568,14 @@ export function QuotaPage() {
         )}
 
         {/* 时间线只比较当前页凭证，避免大量凭证一次性生成无界泳道。 */}
-        <QuotaTimeline
-          entries={pageItems}
-          quotaFor={getQuota}
-          displayNameFor={displayNameFor}
-          resolvedTheme={resolvedTheme}
-        />
+        {!isPool && (
+          <QuotaTimeline
+            entries={pageItems}
+            quotaFor={getQuota}
+            displayNameFor={displayNameFor}
+            resolvedTheme={resolvedTheme}
+          />
+        )}
       </section>
     </div>
   );

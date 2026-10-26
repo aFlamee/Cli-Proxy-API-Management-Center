@@ -3,7 +3,7 @@
 :root {
   --header-height: 80px;
   --shell-gutter: 24px;
-  --sidebar-panel-width: 216px;
+  --sidebar-panel-width: 244px;
   --sidebar-collapsed-width: 60px;
   --sidebar-active-width: var(--sidebar-panel-width);
   --sidebar-gap: 0px;
@@ -48,11 +48,12 @@
   right: 0;
   left: var(--sidebar-active-width);
   z-index: $z-dropdown - 2;
-  height: 141px;
+  // Covers the floating header controls only, so the page title below stays crisp at rest.
+  height: calc(var(--shell-gutter) + var(--floating-control-size) + 12px);
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--bg-secondary) 88%, #0d0c0a) 0%,
+    color-mix(in srgb, var(--bg-secondary) 88%, var(--shell-fade-tint)) 0%,
     color-mix(in srgb, var(--bg-secondary) 54%, transparent) 36%,
     color-mix(in srgb, var(--bg-secondary) 22%, transparent) 66%,
     transparent 100%
@@ -169,6 +170,15 @@
 
   .header-actions {
     right: var(--shell-gutter);
+
+    // On wide screens the icons sit straight on the page, the top fade keeps them legible.
+    @media (min-width: #{$breakpoint-mobile + 1px}) {
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
   }
 
   .mobile-sidebar-actions .btn,
@@ -397,15 +407,14 @@
   z-index: $z-dropdown - 1;
   width: var(--sidebar-panel-width);
   height: 100vh;
-  padding: 14px 10px;
+  padding: 18px 14px;
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: 14px;
   flex-shrink: 0;
   overflow-y: auto;
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   border: 0;
-  border-right: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
   border-radius: 0;
   box-shadow: none;
   scrollbar-width: none;
@@ -458,10 +467,6 @@
       box-shadow: 0 0 0 2px var(--bg-primary);
     }
 
-    .nav-group-label {
-      display: none;
-    }
-
     .nav-group-divider {
       display: block;
     }
@@ -482,9 +487,7 @@
     align-items: center;
     gap: 8px;
     min-height: 36px;
-    padding: 2px 2px 10px;
-    margin-bottom: 2px;
-    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+    padding: 2px 2px 6px;
     flex-shrink: 0;
   }
 
@@ -499,10 +502,10 @@
   }
 
   .sidebar-brand-logo {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
     object-fit: contain;
-    border-radius: 7px;
+    border-radius: 9px;
     box-shadow: none;
     flex-shrink: 0;
   }
@@ -518,43 +521,23 @@
     min-width: 0;
     overflow: hidden;
     color: var(--text-primary);
-    font-size: 15px;
-    font-weight: 800;
+    font-size: 17px;
+    font-weight: 700;
     letter-spacing: 0;
-    white-space: nowrap;
-  }
-
-  .sidebar-brand-subtitle {
-    margin-top: 1px;
-    overflow: hidden;
-    font-size: 10.5px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .nav-section {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 18px;
     flex: 1;
   }
 
   .nav-group {
     display: flex;
     flex-direction: column;
-    gap: $spacing-xs;
-  }
-
-  .nav-group-label {
-    padding: 0 10px 2px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--text-primary) 42%, transparent);
-    user-select: none;
+    gap: 4px;
   }
 
   .nav-group-divider {
@@ -599,16 +582,16 @@
   }
 
   .nav-item {
-    padding: 6px 10px;
-    border-radius: 9px;
+    padding: 9px 12px;
+    border-radius: 10px;
     border: 1px solid transparent;
-    color: var(--text-primary);
-    font-size: 13px;
-    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 500;
     text-decoration: none;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     cursor: pointer;
     transition:
       background $transition-fast,
@@ -623,12 +606,12 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      color: color-mix(in srgb, var(--text-primary) 58%, transparent);
+      color: currentColor;
       transition: color $transition-fast;
 
       svg {
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
         display: block;
       }
 
@@ -665,10 +648,11 @@
       justify-content: center;
       flex-shrink: 0;
       border-radius: $radius-full;
-      background: color-mix(in srgb, var(--text-primary) 9%, transparent);
-      color: var(--text-primary);
-      font-size: 10.5px;
-      font-weight: 700;
+      background: none;
+      color: var(--text-tertiary);
+      font-size: 14px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
       line-height: 1;
     }
 
@@ -685,24 +669,14 @@
     }
 
     &:hover {
-      background: color-mix(in srgb, var(--text-primary) 7%, transparent);
-      border-color: color-mix(in srgb, var(--border-color) 58%, transparent);
-      transform: translateX(1px);
-
-      .nav-icon {
-        color: color-mix(in srgb, var(--text-primary) 82%, transparent);
-      }
+      background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+      color: var(--text-primary);
     }
 
     &.active {
       background: color-mix(in srgb, var(--text-primary) 10%, transparent);
       color: var(--text-primary);
-      border-color: color-mix(in srgb, var(--border-hover) 70%, transparent);
-      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
-
-      .nav-icon {
-        color: var(--primary-active);
-      }
+      font-weight: 600;
     }
 
     &.nav-sub-item {
@@ -746,6 +720,11 @@
   background: #24211c;
   color: #f6f4f1;
   box-shadow: 0 14px 36px rgb(0 0 0 / 0.32);
+
+  [data-theme='dark'] & {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
   pointer-events: none;
   animation: nav-tooltip-in $transition-fast ease-out;
   transition: left $transition-normal;

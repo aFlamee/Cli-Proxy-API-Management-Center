@@ -13,6 +13,7 @@
   --bg-error-light: rgba(198, 87, 70, 0.1);
   --floating-surface: #fffdf9;
   --floating-shadow: 0 12px 26px rgba(0, 0, 0, 0.14);
+  --shell-fade-tint: #0d0c0a; // what the top fade under the header darkens toward
 
   --text-primary: #2d2a26;
   --text-secondary: #6d6760;
@@ -164,30 +165,31 @@
 
 // 深色主题（#191919）
 [data-theme='dark'] {
-  // 极简暖灰：深色模式（提升对比度与层级）
-  --bg-secondary: #151412; // 页面背景
-  --bg-primary: #1d1b18; // 容器/卡片背景
-  --bg-tertiary: #262320; // hover/次级背景
-  --bg-hover: #2e2a26;
-  --bg-quinary: #191714;
+  // Pure black with neutral greys: page black, cards one step up, controls one more.
+  --bg-secondary: #000000; // 页面背景
+  --bg-primary: #0e0e0e; // 容器/卡片背景
+  --bg-tertiary: #1f1f1f; // hover/次级背景
+  --bg-hover: #262626;
+  --bg-quinary: #0a0a0a;
   --bg-error-light: rgba(198, 87, 70, 0.18);
-  --floating-surface: #2a2723;
-  --floating-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
+  --floating-surface: #161616;
+  --floating-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
+  --shell-fade-tint: #000000;
 
-  --text-primary: #f6f4f1;
-  --text-secondary: #c9c3bb;
-  --text-tertiary: #9c958d;
-  --text-quaternary: #6f6962;
+  --text-primary: #f5f5f5;
+  --text-secondary: #bababa;
+  --text-tertiary: #8f8f8f;
+  --text-quaternary: #5c5c5c;
   --text-muted: var(--text-tertiary);
 
-  --border-color: #3a3530;
+  --border-color: #222222;
   --border-secondary: var(--border-color);
-  --border-primary: #4a453f;
-  --border-hover: #5a544d;
+  --border-primary: #2e2e2e;
+  --border-hover: #3a3a3a;
 
-  --primary-color: #8b8680;
-  --primary-hover: #9a948e;
-  --primary-active: #a6a099;
+  --primary-color: #8a8a8a;
+  --primary-hover: #9a9a9a;
+  --primary-active: #a8a8a8;
   --primary-contrast: #ffffff;
 
   --success-color: #10b981;
@@ -209,7 +211,7 @@
   --failure-badge-text: #f1b0a6;
   --failure-badge-border: rgba(198, 87, 70, 0.5);
 
-  --count-badge-bg: rgba(139, 134, 128, 0.28);
+  --count-badge-bg: rgba(138, 138, 138, 0.22);
   --count-badge-text: var(--primary-active);
 
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);

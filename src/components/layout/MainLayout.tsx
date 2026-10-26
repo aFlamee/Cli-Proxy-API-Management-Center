@@ -1156,7 +1156,6 @@ export function MainLayout() {
               {showSidebarLabels && (
                 <span className="sidebar-brand-text">
                   <span className="sidebar-brand-title">{abbrBrandName}</span>
-                  <span className="sidebar-brand-subtitle">{t('sidebar.subtitle')}</span>
                 </span>
               )}
             </div>
@@ -1164,11 +1163,10 @@ export function MainLayout() {
 
           <div className="nav-section">
             {navGroups.map((group, idx) => (
-              <div className="nav-group" key={group.id}>
-                {showSidebarLabels ? (
-                  <div className="nav-group-label">{t(group.labelKey)}</div>
-                ) : (
-                  idx > 0 && <div className="nav-group-divider" aria-hidden="true" />
+              // Groups read by spacing; the label stays for assistive tech.
+              <div className="nav-group" key={group.id} role="group" aria-label={t(group.labelKey)}>
+                {!showSidebarLabels && idx > 0 && (
+                  <div className="nav-group-divider" aria-hidden="true" />
                 )}
                 {group.items.map((item) => renderNavItem(item))}
               </div>
