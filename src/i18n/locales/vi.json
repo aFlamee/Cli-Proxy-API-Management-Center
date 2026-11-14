@@ -1631,7 +1631,10 @@
     "ledger_not_loaded": "Chưa tải. Làm mới để xem tổng.",
     "ledger_no_limits": "Không có giới hạn hạn mức",
     "ledger_available": "khả dụng",
-    "ledger_renews": "gia hạn"
+    "ledger_renews": "gia hạn",
+    "ledger_show_all": "Xem tất cả",
+    "ledger_first_expiry": "Hết hạn sớm nhất",
+    "ledger_reset_refills": "Đặt lại: {{limits}}"
   },
   "plugin_management": {
     "title": "Quản lý Plugin",

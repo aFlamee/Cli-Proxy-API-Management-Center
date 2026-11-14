@@ -1675,7 +1675,10 @@
     "ledger_not_loaded": "아직 로드되지 않았습니다. 새로 고침하여 합계를 확인하세요.",
     "ledger_no_limits": "보고된 할당량 한도 없음",
     "ledger_available": "사용 가능",
-    "ledger_renews": "갱신"
+    "ledger_renews": "갱신",
+    "ledger_show_all": "모두 보기",
+    "ledger_first_expiry": "가장 빠른 만료",
+    "ledger_reset_refills": "초기화 대상: {{limits}}"
   },
   "plugin_management": {
     "title": "플러그인 관리",

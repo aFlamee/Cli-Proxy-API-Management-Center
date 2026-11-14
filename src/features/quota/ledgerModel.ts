@@ -11,6 +11,7 @@
  */
 
 import type { TFunction } from 'i18next';
+import type { AnthropicResetGrant, AnthropicResetWindow } from '@/services/api/claudeResetGrants';
 import { parseIsoToMs, resolvePlanTier, resolveResetMs } from '@/utils/quota';
 import type { QuotaProviderType } from './providers/types';
 import { codexPlanLabel } from './providers/codex/data';
@@ -303,8 +304,17 @@ export function ledgerIdentity(
   return none;
 }
 
+/** One manual reset a credential still holds. */
+export interface LedgerReset {
+  id: string;
+  label: string;
+  /** Second line, e.g. the limits it refills; '' when the provider says nothing more. */
+  note: string;
+  expiresAtMs: number | null;
+}
+
 /**
- * A non-meter figure shown after a row's limits: Codex manual resets
+ * A non-meter figure shown after a row's limits: manual resets
  * ("2 available · Reset 1 in 22 days") or xAI monthly credits ("$0.00 / $5.00").
  */
 export interface LedgerDetail {
@@ -315,6 +325,8 @@ export interface LedgerDetail {
   /** Lead-in for the countdown line, e.g. "Reset 1"; null when there is none. */
   note: string | null;
   noteAtMs: number | null;
+  /** Every manual reset behind the figure; empty for other details. */
+  resets: LedgerReset[];
 }
 
 const formatUsdFromCents = (cents: number | null | undefined): string | null =>
@@ -351,6 +363,12 @@ export function buildLedgerDetails(
             ? null
             : String(t('codex_quota.reset_credit_number', { index: firstIndex + 1 })),
         noteAtMs: firstIndex === -1 ? null : parseIsoToMs(credits[firstIndex].expiresAt),
+        resets: credits.map((credit, index) => ({
+          id: String(index),
+          label: String(t('codex_quota.reset_credit_number', { index: index + 1 })),
+          note: '',
+          expiresAtMs: parseIsoToMs(credit.expiresAt),
+        })),
       },
     ];
   }
@@ -386,11 +404,73 @@ export function buildLedgerDetails(
         suffix: limit === null ? '' : `/ ${formatUsdFromCents(limit)}`,
         note: `${t('xai_quota.pay_as_you_go_label')}: ${payAsYouGo}`,
         noteAtMs: parseIsoToMs(billing.billingPeriodEnd),
+        resets: [],
       },
     ];
   }
 
   return [];
+}
+
+/** The ledger's name for each limit a Claude reset grant refills. */
+const CLAUDE_RESET_WINDOW_LABEL_KEYS: Record<AnthropicResetWindow, string> = {
+  five_hour: 'claude_quota.five_hour',
+  seven_day: 'claude_quota.seven_day',
+  seven_day_overage_included: 'claude_quota.seven_day_fable',
+};
+
+/**
+ * Claude's manual resets. The grants are read apart from the quota, so `count`
+ * is null until that read answers and `message` names why it did not.
+ */
+export function buildClaudeResetDetail(
+  count: number | null,
+  grants: readonly AnthropicResetGrant[],
+  message: string,
+  t: TFunction
+): LedgerDetail {
+  const detail: LedgerDetail = {
+    id: 'reset-grants',
+    label: String(t('codex_quota.reset_credits_label')),
+    value: '--',
+    suffix: '',
+    note: message ? String(t(`claude_reset.${message}`)) : null,
+    noteAtMs: null,
+    resets: [],
+  };
+  if (count === null) return detail;
+
+  // Soonest expiry first, like the card's grant list.
+  const resets = grants
+    .filter((grant) => grant.resetsLeft > 0)
+    .map((grant) => ({ grant, expiresAtMs: parseIsoToMs(grant.endsAt) }))
+    .sort((a, b) => (a.expiresAtMs ?? Infinity) - (b.expiresAtMs ?? Infinity))
+    .map(({ grant, expiresAtMs }, index): LedgerReset => {
+      const limits = grant.clears
+        .map((window) => String(t(CLAUDE_RESET_WINDOW_LABEL_KEYS[window])))
+        .join(', ');
+      return {
+        id: grant.id,
+        label: grant.label || String(t('claude_reset.grant_number', { index: index + 1 })),
+        note: [
+          limits && String(t('quota_management.ledger_reset_refills', { limits })),
+          grant.resetsTotal > 1 &&
+            String(t('claude_reset.count', { left: grant.resetsLeft, total: grant.resetsTotal })),
+        ]
+          .filter(Boolean)
+          .join(' · '),
+        expiresAtMs,
+      };
+    });
+  const firstExpiry = resets[0]?.expiresAtMs ?? null;
+  return {
+    ...detail,
+    value: String(count),
+    suffix: String(t('quota_management.ledger_available')),
+    note: firstExpiry === null ? null : String(t('quota_management.ledger_first_expiry')),
+    noteAtMs: firstExpiry,
+    resets,
+  };
 }
 
 /**

@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import type { TFunction } from 'i18next';
+import type { AnthropicResetGrant } from '@/services/api/claudeResetGrants';
 import {
+  buildClaudeResetDetail,
   buildLedgerDetails,
   buildLedgerMeters,
   ledgerColumns,
@@ -102,6 +104,47 @@ describe('buildLedgerDetails', () => {
     expect(detail.value).toBe('2');
     expect(detail.note).toBe('codex_quota.reset_credit_number#2');
     expect(detail.noteAtMs).toBe(Date.parse('2026-10-03T15:02:00Z'));
+    expect(detail.resets.map((reset) => [reset.label, reset.expiresAtMs])).toEqual([
+      ['codex_quota.reset_credit_number#1', null],
+      ['codex_quota.reset_credit_number#2', Date.parse('2026-10-03T15:02:00Z')],
+    ]);
+  });
+});
+
+describe('buildClaudeResetDetail', () => {
+  const grant = (id: string, endsAt: string, clears: AnthropicResetGrant['clears']) =>
+    ({ id, label: id, resetsTotal: 1, resetsLeft: 1, endsAt, clears }) as AnthropicResetGrant;
+
+  test('lists every grant, soonest expiry first, with the limits it refills', () => {
+    const detail = buildClaudeResetDetail(
+      2,
+      [
+        grant('fable', '2027-03-09T07:59:00Z', ['five_hour', 'seven_day_overage_included']),
+        grant('full', '2026-12-10T22:00:00Z', ['five_hour', 'seven_day']),
+      ],
+      '',
+      ((key: string, params?: { limits?: string }) =>
+        params?.limits ? `${key}:${params.limits}` : key) as unknown as TFunction
+    );
+    expect(detail.value).toBe('2');
+    expect(detail.noteAtMs).toBe(Date.parse('2026-12-10T22:00:00Z'));
+    expect(detail.resets.map((reset) => [reset.id, reset.note])).toEqual([
+      [
+        'full',
+        'quota_management.ledger_reset_refills:claude_quota.five_hour, claude_quota.seven_day',
+      ],
+      [
+        'fable',
+        'quota_management.ledger_reset_refills:claude_quota.five_hour, claude_quota.seven_day_fable',
+      ],
+    ]);
+  });
+
+  test('shows why the grants are missing when their read failed', () => {
+    const detail = buildClaudeResetDetail(null, [], 'read_error', t);
+    expect(detail.value).toBe('--');
+    expect(detail.note).toBe('claude_reset.read_error');
+    expect(detail.resets).toEqual([]);
   });
 });
 

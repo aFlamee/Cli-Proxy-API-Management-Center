@@ -1675,7 +1675,10 @@
     "ledger_not_loaded": "Not loaded yet. Refresh to see totals.",
     "ledger_no_limits": "No quota limits reported",
     "ledger_available": "available",
-    "ledger_renews": "renews"
+    "ledger_renews": "renews",
+    "ledger_show_all": "Show all",
+    "ledger_first_expiry": "First expires",
+    "ledger_reset_refills": "Refills {{limits}}"
   },
   "plugin_management": {
     "title": "Plugin Management",
