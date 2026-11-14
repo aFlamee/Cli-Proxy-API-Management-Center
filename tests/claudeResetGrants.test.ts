@@ -1,4 +1,7 @@
-import { selectResetGrant } from '../src/features/quota/providers/claude/selectResetGrant';
+import {
+  isResetGrantSpendable,
+  selectResetGrant,
+} from '../src/features/quota/providers/claude/selectResetGrant';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 import {
@@ -367,4 +370,14 @@ test('account reads map upstream 429 to a sanitized typed rate-limit failure', a
     });
   }
   expect(calls).toBe(2); // Neither read retries.
+});
+
+test('each grant is judged on its own, so the list can offer every spendable one', () => {
+  const base = status();
+  const a = { ...base.grants[0], id: 'a' };
+  const paused = { ...a, id: 'b', paused: true };
+  const both = { ...base, grants: [a, paused] };
+  expect(isResetGrantSpendable(both, 'a', 0)).toBe(true);
+  expect(isResetGrantSpendable(both, 'b', 0)).toBe(false);
+  expect(isResetGrantSpendable(both, 'missing', 0)).toBe(false);
 });

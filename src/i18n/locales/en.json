@@ -1679,7 +1679,8 @@
     "ledger_show_all": "Show all",
     "ledger_first_expiry": "First expires",
     "ledger_reset_refills": "Refills {{limits}}",
-    "ledger_reset_preview_hint": "Hover a reset to see what it refills."
+    "ledger_reset_preview_hint": "Hover a reset to see what it refills.",
+    "ledger_redeem": "Redeem"
   },
   "plugin_management": {
     "title": "Plugin Management",

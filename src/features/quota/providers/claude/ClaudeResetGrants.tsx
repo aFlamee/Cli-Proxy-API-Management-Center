@@ -11,7 +11,7 @@ import {
 import type { AuthFileItem } from '@/types';
 import { normalizeAuthIndex } from '@/utils/quota';
 import { resetGrantOperations, RETRY_WINDOW_MS } from './resetGrantOperations';
-import { selectResetGrant } from './selectResetGrant';
+import { isResetGrantSpendable, selectResetGrant } from './selectResetGrant';
 import { readResetGrantsForCard, scheduleResetGrantRead } from './resetGrantReads';
 
 /** Card-owned reads; the session-scoped journal owns spending and ambiguous retries. */
@@ -75,14 +75,22 @@ export function useClaudeResetGrants(
   const pending = operation && !operation.code ? operation : undefined;
   const expired = Boolean(pending && now - pending.createdAt >= RETRY_WINDOW_MS);
   const selected = pending?.grantId ?? (status ? selectResetGrant(status, now)?.id : undefined);
-  const blocked = disabled || !sessionActive || !authIndex || busy || expired || !selected;
-  const confirm = () => {
-    if (blocked || lock.current || !selected || !authIndex) return;
+  const idle = !disabled && sessionActive && Boolean(authIndex) && !busy && !expired;
+  const blocked = !idle || !selected;
+  // An unknown outcome pins spending to its own grant until it settles.
+  const canRedeem = (grantId: string) =>
+    idle &&
+    (pending
+      ? pending.grantId === grantId
+      : Boolean(status && isResetGrantSpendable(status, grantId, now)));
+  const redeem = (grantId: string) => {
+    if (!canRedeem(grantId) || lock.current || !authIndex) return;
+    const grantLabel = status?.grants.find((grant) => grant.id === grantId)?.label;
     const version = generation.current;
     const current = () =>
       session === apiClient.getConnectionRevision() && version === generation.current;
     showConfirmation({
-      title: t('claude_reset.title'),
+      title: grantLabel || t('claude_reset.title'),
       message: t(pending ? 'claude_reset.retry_confirm' : 'claude_reset.confirm_text', {
         name: file.name,
       }),
@@ -94,7 +102,7 @@ export function useClaudeResetGrants(
         lock.current = true;
         setBusy(true);
         try {
-          const answer = await resetGrantOperations.run(key, authIndex, selected);
+          const answer = await resetGrantOperations.run(key, authIndex, grantId);
           if (!current()) return;
           showNotification(
             t(`claude_reset.${answer.unresolved ? 'unknown' : answer.code}`),
@@ -120,7 +128,12 @@ export function useClaudeResetGrants(
       },
     });
   };
+  const confirm = () => {
+    if (!blocked && selected) redeem(selected);
+  };
   return {
+    canRedeem,
+    redeem,
     count: status?.grants.reduce((sum, grant) => sum + grant.resetsLeft, 0) ?? null,
     grants: status?.grants ?? [],
     busy,

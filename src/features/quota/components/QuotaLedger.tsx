@@ -308,6 +308,15 @@ function CredentialRow({
     entry.type === 'claude' && status === 'success'
       ? [buildClaudeResetDetail(claudeReset, quota, t)]
       : row.details;
+  // Claude spends the chosen grant. Codex spends one credit of OpenAI's choosing.
+  const redeem: Redeem =
+    entry.type === 'claude'
+      ? { can: claudeReset.canRedeem, run: claudeReset.redeem, busy: claudeReset.busy }
+      : {
+          can: () => showReset && canRefresh && !loading && !resetting,
+          run: onReset,
+          busy: resetting,
+        };
   const identity = ledgerIdentity(entry.type, quota, t);
   const showReset =
     status === 'success' &&
@@ -368,6 +377,7 @@ function CredentialRow({
             detail={detail}
             credential={name}
             meters={meters}
+            redeem={redeem}
             now={now}
             locale={i18n.resolvedLanguage}
           />
@@ -478,6 +488,13 @@ function MeterCell({
   );
 }
 
+/** Spends one of a credential's manual resets by id. */
+interface Redeem {
+  can: (resetId: string) => boolean;
+  run: (resetId: string) => void;
+  busy: boolean;
+}
+
 /**
  * "Manual resets · 2 available · Reset 1 · in 22 days · 10/03, 17:02" as one column,
  * as wide as its text. A detail holding resets opens the list of all of them.
@@ -486,12 +503,14 @@ function DetailCell({
   detail,
   credential,
   meters,
+  redeem,
   now,
   locale,
 }: {
   detail: LedgerDetail;
   credential: string;
   meters: LedgerMeter[];
+  redeem: Redeem;
   now: number;
   locale: string | undefined;
 }) {
@@ -570,18 +589,33 @@ function DetailCell({
                 <span className={styles.resetItemLabel}>{reset.label}</span>
                 {reset.note && <span className={styles.resetItemNote}>{reset.note}</span>}
               </div>
-              {reset.expiresAtMs === null ? (
-                <span className={styles.resetItemNote}>{t('claude_reset.expiry_unknown')}</span>
-              ) : (
-                <div className={styles.resetItemExpiry}>
-                  <span className={styles.resetItemLabel}>
-                    {formatRelativeInstant(reset.expiresAtMs, now, locale)}
-                  </span>
-                  <span className={styles.resetItemNote}>
-                    {t('claude_reset.ends', { date: formatInstantShort(reset.expiresAtMs) })}
-                  </span>
-                </div>
-              )}
+              <div className={styles.resetItemSide}>
+                {reset.expiresAtMs === null ? (
+                  <span className={styles.resetItemNote}>{t('claude_reset.expiry_unknown')}</span>
+                ) : (
+                  <div className={styles.resetItemExpiry}>
+                    <span className={styles.resetItemLabel}>
+                      {formatRelativeInstant(reset.expiresAtMs, now, locale)}
+                    </span>
+                    <span className={styles.resetItemNote}>
+                      {t('claude_reset.ends', { date: formatInstantShort(reset.expiresAtMs) })}
+                    </span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className={styles.action}
+                  disabled={!redeem.can(reset.id)}
+                  onClick={() => {
+                    // The confirmation is its own dialog. Close this one so focus is not trapped.
+                    setListOpen(false);
+                    redeem.run(reset.id);
+                  }}
+                >
+                  <IconRefreshCw size={12} className={redeem.busy ? styles.spinning : undefined} />
+                  {t('quota_management.ledger_redeem')}
+                </button>
+              </div>
             </li>
           ))}
         </ul>

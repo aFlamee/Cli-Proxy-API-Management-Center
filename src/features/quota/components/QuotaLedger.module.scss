@@ -274,6 +274,13 @@ $meter-gap: 21px;
   min-width: 0;
 }
 
+.resetItemSide {
+  display: flex;
+  align-items: center;
+  gap: $meter-gap;
+  flex-shrink: 0;
+}
+
 .resetItemExpiry {
   flex-shrink: 0;
   text-align: right;

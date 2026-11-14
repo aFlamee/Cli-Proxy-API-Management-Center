@@ -1703,7 +1703,8 @@
     "ledger_show_all": "查看全部",
     "ledger_first_expiry": "最早到期",
     "ledger_reset_refills": "可重置：{{limits}}",
-    "ledger_reset_preview_hint": "將滑鼠停在重置上，查看它會恢復多少額度。"
+    "ledger_reset_preview_hint": "將滑鼠停在重置上，查看它會恢復多少額度。",
+    "ledger_redeem": "兌換"
   },
   "plugin_management": {
     "title": "插件管理",
