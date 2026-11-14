@@ -168,6 +168,8 @@ export interface ClaudeUsagePayload {
   seven_day_cowork?: ClaudeUsageWindow | null;
   iguana_necktie?: ClaudeUsageWindow | null;
   limits?: ClaudeUsageLimit[] | null;
+  /** How much of the weekly limit each scoped limit used; `limit_index` points into `limits`. */
+  weekly_scoped_shares?: { limit_index?: unknown; used_percent_of_weekly?: unknown }[] | null;
   extra_usage?: ClaudeExtraUsagePayload | null;
   [key: string]: unknown;
 }
@@ -218,6 +220,8 @@ export interface ClaudeQuotaState {
   observedAt?: string | null;
   stale?: boolean;
   planType?: string | null;
+  /** Percent of the 7-day limit that Fable used, which a Fable reset gives back. */
+  fableWeeklyShare?: number | null;
   error?: string;
   errorStatus?: number;
 }

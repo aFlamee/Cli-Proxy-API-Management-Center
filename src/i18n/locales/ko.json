@@ -1678,7 +1678,8 @@
     "ledger_renews": "갱신",
     "ledger_show_all": "모두 보기",
     "ledger_first_expiry": "가장 빠른 만료",
-    "ledger_reset_refills": "초기화 대상: {{limits}}"
+    "ledger_reset_refills": "초기화 대상: {{limits}}",
+    "ledger_reset_preview_hint": "초기화에 마우스를 올리면 무엇이 채워지는지 볼 수 있습니다."
   },
   "plugin_management": {
     "title": "플러그인 관리",

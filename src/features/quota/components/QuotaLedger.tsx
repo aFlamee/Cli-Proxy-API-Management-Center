@@ -306,7 +306,7 @@ function CredentialRow({
   );
   const details =
     entry.type === 'claude' && status === 'success'
-      ? [buildClaudeResetDetail(claudeReset.count, claudeReset.grants, claudeReset.message, t)]
+      ? [buildClaudeResetDetail(claudeReset, quota, t)]
       : row.details;
   const identity = ledgerIdentity(entry.type, quota, t);
   const showReset =
@@ -367,6 +367,7 @@ function CredentialRow({
             key={detail.id}
             detail={detail}
             credential={name}
+            meters={meters}
             now={now}
             locale={i18n.resolvedLanguage}
           />
@@ -425,28 +426,41 @@ function CredentialRow({
   );
 }
 
+/** `preview` is the remaining percent a reset would leave; it shows only when it adds some. */
 function MeterCell({
   meter,
   dimmed,
+  preview,
   now,
   locale,
   t,
 }: {
   meter: LedgerMeter;
   dimmed: boolean;
+  preview?: number;
   now: number;
   locale: string | undefined;
   t: TFunction;
 }) {
+  const gain = preview !== undefined && preview > (meter.remaining ?? 0) ? preview : null;
   return (
     <div className={`${styles.meter} ${dimmed ? styles.meterDimmed : ''}`}>
       <div className={styles.meterHead}>
         <span className={styles.meterLabel} title={meter.label}>
           {meter.label}
         </span>
-        <span className={styles.meterValue}>{formatPercent(meter.remaining)}</span>
+        <span className={styles.meterValue}>
+          {formatPercent(meter.remaining)}
+          {gain !== null && <span className={styles.meterGain}> → {formatPercent(gain)}</span>}
+        </span>
       </div>
       <span className={styles.track}>
+        {gain !== null && (
+          <span
+            className={`${styles.fill} ${styles.fillPreview} ${toneClass(gain)}`}
+            style={{ width: `${gain}%` }}
+          />
+        )}
         {meter.remaining !== null && meter.remaining > 0 && (
           <span
             className={`${styles.fill} ${toneClass(meter.remaining)}`}
@@ -471,16 +485,20 @@ function MeterCell({
 function DetailCell({
   detail,
   credential,
+  meters,
   now,
   locale,
 }: {
   detail: LedgerDetail;
   credential: string;
+  meters: LedgerMeter[];
   now: number;
   locale: string | undefined;
 }) {
   const { t } = useTranslation();
   const [listOpen, setListOpen] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const previewed = detail.resets.find((reset) => reset.id === previewId);
   return (
     <div className={`${styles.meter} ${styles.detail}`}>
       <div className={`${styles.meterHead} ${styles.detailHead}`}>
@@ -515,11 +533,39 @@ function DetailCell({
           )}
         </div>
       )}
-      <Modal open={listOpen} onClose={() => setListOpen(false)} title={detail.label}>
+      <Modal open={listOpen} onClose={() => setListOpen(false)} title={detail.label} width={620}>
         <div className={styles.fileName}>{credential}</div>
+        {meters.length > 0 && (
+          <>
+            <div className={`${styles.meters} ${styles.resetPreview}`}>
+              {meters.map((meter) => (
+                <MeterCell
+                  key={meter.id}
+                  meter={meter}
+                  dimmed={false}
+                  preview={previewed?.after[meter.id]}
+                  now={now}
+                  locale={locale}
+                  t={t}
+                />
+              ))}
+            </div>
+            <div className={styles.resetItemNote}>
+              {t('quota_management.ledger_reset_preview_hint')}
+            </div>
+          </>
+        )}
         <ul className={styles.resetList}>
           {detail.resets.map((reset) => (
-            <li key={reset.id} className={styles.resetItem}>
+            <li
+              key={reset.id}
+              className={`${styles.resetItem} ${reset.id === previewId ? styles.resetItemActive : ''}`}
+              tabIndex={0}
+              onMouseEnter={() => setPreviewId(reset.id)}
+              onMouseLeave={() => setPreviewId(null)}
+              onFocus={() => setPreviewId(reset.id)}
+              onBlur={() => setPreviewId(null)}
+            >
               <div className={styles.resetItemName}>
                 <span className={styles.resetItemLabel}>{reset.label}</span>
                 {reset.note && <span className={styles.resetItemNote}>{reset.note}</span>}

@@ -1685,7 +1685,8 @@
     "ledger_renews": "продление",
     "ledger_show_all": "Показать все",
     "ledger_first_expiry": "Первый истекает",
-    "ledger_reset_refills": "Сбрасывает: {{limits}}"
+    "ledger_reset_refills": "Сбрасывает: {{limits}}",
+    "ledger_reset_preview_hint": "Наведите на сброс, чтобы увидеть, что он восстановит."
   },
   "plugin_management": {
     "title": "Управление плагинами",

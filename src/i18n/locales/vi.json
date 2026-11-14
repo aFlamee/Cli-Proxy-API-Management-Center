@@ -1634,7 +1634,8 @@
     "ledger_renews": "gia hạn",
     "ledger_show_all": "Xem tất cả",
     "ledger_first_expiry": "Hết hạn sớm nhất",
-    "ledger_reset_refills": "Đặt lại: {{limits}}"
+    "ledger_reset_refills": "Đặt lại: {{limits}}",
+    "ledger_reset_preview_hint": "Di chuột lên một lần đặt lại để xem nó khôi phục những gì."
   },
   "plugin_management": {
     "title": "Quản lý Plugin",

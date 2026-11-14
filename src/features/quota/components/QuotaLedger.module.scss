@@ -224,20 +224,46 @@ $meter-gap: 21px;
 /* ---------- reset list (modal) ---------- */
 
 .resetList {
-  margin: 0;
+  margin: 6px 0 0;
   padding: 0;
   list-style: none;
+}
+
+.resetPreview {
+  margin: 14px 0 8px;
 }
 
 .resetItem {
   display: flex;
   justify-content: space-between;
   gap: $meter-gap;
-  padding: 12px 0;
+  padding: 12px 9px;
+  border-radius: 8px;
+  outline: none;
+  transition: background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
 
   & + & {
     border-top: 1px solid $hairline;
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
+  }
+}
+
+.resetItemActive {
+  background: var(--bg-quinary);
+}
+
+/* What a hovered reset would refill: the bar's future level, behind today's fill. */
+.fillPreview {
+  opacity: 0.35;
+}
+
+.meterGain {
+  font-weight: 600;
+  color: var(--text-tertiary);
 }
 
 .resetItemName,
@@ -555,6 +581,7 @@ $meter-gap: 21px;
   .fill,
   .secondaryToggle,
   .detailToggle,
+  .resetItem,
   .action,
   .row {
     transition: none;

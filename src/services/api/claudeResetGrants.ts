@@ -47,6 +47,8 @@ export interface AnthropicResetGrant {
   paused: boolean;
   usableNow: boolean;
   useRequiresLimit: boolean;
+  /** Also gives the 7-day limit back what the cleared scoped limits used of it. */
+  givesBackWeekly: boolean;
   percentUsed: Partial<Record<AnthropicResetWindow, number>>;
 }
 
@@ -156,13 +158,15 @@ function parseGrant(value: unknown): AnthropicResetGrant | null {
   // say it is usable is not offered for spending.
   const usableNow = optionalBoolean(value.usable_now, false);
   const useRequiresLimit = optionalBoolean(value.use_requires_limit, true);
+  const givesBackWeekly = optionalBoolean(value.gives_back_weekly, false);
   if (
     startsAt === undefined ||
     endsAt === undefined ||
     clears === undefined ||
     paused === undefined ||
     usableNow === undefined ||
-    useRequiresLimit === undefined
+    useRequiresLimit === undefined ||
+    givesBackWeekly === undefined
   )
     return null;
   return {
@@ -176,6 +180,7 @@ function parseGrant(value: unknown): AnthropicResetGrant | null {
     paused,
     usableNow,
     useRequiresLimit,
+    givesBackWeekly,
     percentUsed: parsePercentUsed(value.percent_used),
   };
 }

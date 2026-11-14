@@ -7,7 +7,11 @@ import i18n from '@/i18n';
 import { normalizeClaudeUsageSnapshot } from '@/services/api/claudeUsage';
 import { apiCallApi, getApiCallErrorMessage, type ApiCallResult } from '@/services/api/apiCall';
 import { apiClient } from '@/services/api/client';
-import { CLAUDE_CONFIG, hasClaudeUsageData } from '@/features/quota/providers/claude/data';
+import {
+  CLAUDE_CONFIG,
+  findFableWeeklyShare,
+  hasClaudeUsageData,
+} from '@/features/quota/providers/claude/data';
 import { ClaudeQuotaBody } from '@/features/quota/providers/claude/ClaudeQuotaBody';
 import { buildTimelineLane } from '@/features/quota/quotaTimelineModel';
 import { nextRecoveryMs } from '@/features/quota/resetSchedule';
@@ -503,5 +507,22 @@ describe('Claude usage snapshot rendering and retention', () => {
       commitIfQuotaCacheCurrent(previousSession, () => store.setClaudeQuota({ [file.name]: quota }))
     ).toBe(false);
     expect(useQuotaStore.getState().claudeQuota).toEqual({});
+  });
+});
+
+describe('findFableWeeklyShare', () => {
+  test('reads the weekly share of the Fable limit that limit_index points at', () => {
+    const fable = {
+      kind: 'weekly_scoped',
+      percent: 78,
+      scope: { model: { display_name: 'Fable' } },
+      is_active: true,
+    };
+    expect(
+      findFableWeeklyShare({
+        limits: [{ kind: 'session', percent: 64 }, { kind: 'weekly_all', percent: 55 }, fable],
+        weekly_scoped_shares: [{ limit_index: 2, used_percent_of_weekly: 39 }],
+      } as never)
+    ).toBe(39);
   });
 });

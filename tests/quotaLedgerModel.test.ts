@@ -108,40 +108,67 @@ describe('buildLedgerDetails', () => {
       ['codex_quota.reset_credit_number#1', null],
       ['codex_quota.reset_credit_number#2', Date.parse('2026-10-03T15:02:00Z')],
     ]);
+    expect(detail.resets[0].after).toEqual({});
   });
 });
 
 describe('buildClaudeResetDetail', () => {
-  const grant = (id: string, endsAt: string, clears: AnthropicResetGrant['clears']) =>
-    ({ id, label: id, resetsTotal: 1, resetsLeft: 1, endsAt, clears }) as AnthropicResetGrant;
+  const grant = (
+    id: string,
+    endsAt: string,
+    clears: AnthropicResetGrant['clears'],
+    givesBackWeekly = false
+  ) =>
+    ({
+      id,
+      label: id,
+      resetsTotal: 1,
+      resetsLeft: 1,
+      endsAt,
+      clears,
+      givesBackWeekly,
+    }) as AnthropicResetGrant;
+  const window = (id: string, usedPercent: number) => ({ id, label: id, usedPercent });
+  const quota = {
+    status: 'success',
+    windows: [window('five-hour', 64), window('seven-day', 55), window('seven-day-fable', 78)],
+    fableWeeklyShare: 39,
+  };
+  const grants = [
+    grant('fable', '2027-03-09T07:59:00Z', ['five_hour', 'seven_day_overage_included'], true),
+    grant('full', '2026-12-10T22:00:00Z', ['five_hour', 'seven_day', 'seven_day_overage_included']),
+  ];
 
   test('lists every grant, soonest expiry first, with the limits it refills', () => {
-    const detail = buildClaudeResetDetail(
-      2,
-      [
-        grant('fable', '2027-03-09T07:59:00Z', ['five_hour', 'seven_day_overage_included']),
-        grant('full', '2026-12-10T22:00:00Z', ['five_hour', 'seven_day']),
-      ],
-      '',
-      ((key: string, params?: { limits?: string }) =>
-        params?.limits ? `${key}:${params.limits}` : key) as unknown as TFunction
-    );
+    const detail = buildClaudeResetDetail({ count: 2, grants, message: '' }, quota, ((
+      key: string,
+      params?: { limits?: string }
+    ) => (params?.limits ? `${key}:${params.limits}` : key)) as unknown as TFunction);
     expect(detail.value).toBe('2');
     expect(detail.noteAtMs).toBe(Date.parse('2026-12-10T22:00:00Z'));
-    expect(detail.resets.map((reset) => [reset.id, reset.note])).toEqual([
-      [
-        'full',
-        'quota_management.ledger_reset_refills:claude_quota.five_hour, claude_quota.seven_day',
-      ],
-      [
-        'fable',
-        'quota_management.ledger_reset_refills:claude_quota.five_hour, claude_quota.seven_day_fable',
-      ],
-    ]);
+    expect(detail.resets.map((reset) => reset.id)).toEqual(['full', 'fable']);
+    expect(detail.resets[1].note).toBe(
+      'quota_management.ledger_reset_refills:claude_quota.five_hour, claude_quota.seven_day_fable'
+    );
+  });
+
+  test('a full reset refills everything, a Fable reset gives back only its weekly share', () => {
+    const [full, fable] = buildClaudeResetDetail(
+      { count: 2, grants, message: '' },
+      quota,
+      t
+    ).resets;
+    expect(full.after).toEqual({ 'five-hour': 100, 'seven-day': 100, 'seven-day-fable': 100 });
+    // 45% left on the weekly limit plus the 39% Fable used of it.
+    expect(fable.after).toEqual({ 'five-hour': 100, 'seven-day-fable': 100, 'seven-day': 84 });
   });
 
   test('shows why the grants are missing when their read failed', () => {
-    const detail = buildClaudeResetDetail(null, [], 'read_error', t);
+    const detail = buildClaudeResetDetail(
+      { count: null, grants: [], message: 'read_error' },
+      quota,
+      t
+    );
     expect(detail.value).toBe('--');
     expect(detail.note).toBe('claude_reset.read_error');
     expect(detail.resets).toEqual([]);

@@ -311,6 +311,8 @@ export interface LedgerReset {
   /** Second line, e.g. the limits it refills; '' when the provider says nothing more. */
   note: string;
   expiresAtMs: number | null;
+  /** Remaining percent per meter id once this reset is spent; untouched meters are absent. */
+  after: Record<string, number>;
 }
 
 /**
@@ -363,11 +365,15 @@ export function buildLedgerDetails(
             ? null
             : String(t('codex_quota.reset_credit_number', { index: firstIndex + 1 })),
         noteAtMs: firstIndex === -1 ? null : parseIsoToMs(credits[firstIndex].expiresAt),
+        // A Codex reset refills every Codex window.
         resets: credits.map((credit, index) => ({
           id: String(index),
           label: String(t('codex_quota.reset_credit_number', { index: index + 1 })),
           note: '',
           expiresAtMs: parseIsoToMs(credit.expiresAt),
+          after: Object.fromEntries(
+            buildLedgerMeters(provider, quota, t).map((meter) => [meter.id, 100])
+          ),
         })),
       },
     ];
@@ -412,23 +418,38 @@ export function buildLedgerDetails(
   return [];
 }
 
-/** The ledger's name for each limit a Claude reset grant refills. */
-const CLAUDE_RESET_WINDOW_LABEL_KEYS: Record<AnthropicResetWindow, string> = {
-  five_hour: 'claude_quota.five_hour',
-  seven_day: 'claude_quota.seven_day',
-  seven_day_overage_included: 'claude_quota.seven_day_fable',
+/** The ledger meter each limit a Claude reset grant refills. */
+const CLAUDE_RESET_WINDOW_METERS: Record<AnthropicResetWindow, { id: string; labelKey: string }> = {
+  five_hour: { id: 'five-hour', labelKey: 'claude_quota.five_hour' },
+  seven_day: { id: 'seven-day', labelKey: 'claude_quota.seven_day' },
+  seven_day_overage_included: { id: 'seven-day-fable', labelKey: 'claude_quota.seven_day_fable' },
 };
+
+/** Meter levels after spending `grant`: cleared limits refill, a Fable reset gives its weekly share back. */
+function claudeResetAfter(
+  grant: AnthropicResetGrant,
+  meters: readonly LedgerMeter[],
+  fableWeeklyShare: number | null
+): Record<string, number> {
+  const after: Record<string, number> = {};
+  for (const window of grant.clears) after[CLAUDE_RESET_WINDOW_METERS[window].id] = 100;
+  const weekly = meters.find((meter) => meter.id === 'seven-day')?.remaining ?? null;
+  if (grant.givesBackWeekly && !('seven-day' in after) && weekly !== null && fableWeeklyShare) {
+    after['seven-day'] = clampPercent(weekly + fableWeeklyShare);
+  }
+  return after;
+}
 
 /**
  * Claude's manual resets. The grants are read apart from the quota, so `count`
  * is null until that read answers and `message` names why it did not.
  */
 export function buildClaudeResetDetail(
-  count: number | null,
-  grants: readonly AnthropicResetGrant[],
-  message: string,
+  read: { count: number | null; grants: readonly AnthropicResetGrant[]; message: string },
+  quota: unknown,
   t: TFunction
 ): LedgerDetail {
+  const { count, grants, message } = read;
   const detail: LedgerDetail = {
     id: 'reset-grants',
     label: String(t('codex_quota.reset_credits_label')),
@@ -440,6 +461,9 @@ export function buildClaudeResetDetail(
   };
   if (count === null) return detail;
 
+  const meters = buildLedgerMeters('claude', quota, t);
+  const fableWeeklyShare =
+    (quota as { fableWeeklyShare?: number | null } | undefined)?.fableWeeklyShare ?? null;
   // Soonest expiry first, like the card's grant list.
   const resets = grants
     .filter((grant) => grant.resetsLeft > 0)
@@ -447,7 +471,7 @@ export function buildClaudeResetDetail(
     .sort((a, b) => (a.expiresAtMs ?? Infinity) - (b.expiresAtMs ?? Infinity))
     .map(({ grant, expiresAtMs }, index): LedgerReset => {
       const limits = grant.clears
-        .map((window) => String(t(CLAUDE_RESET_WINDOW_LABEL_KEYS[window])))
+        .map((window) => String(t(CLAUDE_RESET_WINDOW_METERS[window].labelKey)))
         .join(', ');
       return {
         id: grant.id,
@@ -460,6 +484,7 @@ export function buildClaudeResetDetail(
           .filter(Boolean)
           .join(' · '),
         expiresAtMs,
+        after: claudeResetAfter(grant, meters, fableWeeklyShare),
       };
     });
   const firstExpiry = resets[0]?.expiresAtMs ?? null;

@@ -39,6 +39,7 @@ export type ClaudeQuotaData = {
   extraUsage?: ClaudeExtraUsage | null;
   planType?: string | null;
   dollarWindows: ClaudeDollarWindow[];
+  fableWeeklyShare: number | null;
   observedAt: string;
 };
 
@@ -60,6 +61,15 @@ const findFableUsageLimit = (payload: ClaudeUsagePayload) => {
   });
 
   return candidates.find((limit) => limit.is_active === true) ?? candidates[0] ?? null;
+};
+
+/** Percent of the 7-day limit that the Fable limit used. */
+export const findFableWeeklyShare = (payload: ClaudeUsagePayload): number | null => {
+  const fableLimit = findFableUsageLimit(payload);
+  if (!fableLimit || !Array.isArray(payload.weekly_scoped_shares)) return null;
+  const index = payload.limits?.indexOf(fableLimit);
+  const share = payload.weekly_scoped_shares.find((item) => item?.limit_index === index);
+  return normalizeNumberValue(share?.used_percent_of_weekly);
 };
 
 const isDollarDenominatedWindow = (window: ClaudeUsageWindow) =>
@@ -243,6 +253,7 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
     windows,
     extraUsage: snapshot.extraUsage,
     dollarWindows,
+    fableWeeklyShare: findFableWeeklyShare(payload),
     observedAt: new Date().toISOString(),
     planType,
   };
@@ -262,6 +273,7 @@ export const CLAUDE_CONFIG: QuotaProviderData<ClaudeQuotaState, ClaudeQuotaData>
     extraUsage: data.extraUsage,
     planType: data.planType,
     dollarWindows: data.dollarWindows,
+    fableWeeklyShare: data.fableWeeklyShare,
     observedAt: data.observedAt,
     stale: false,
   }),
