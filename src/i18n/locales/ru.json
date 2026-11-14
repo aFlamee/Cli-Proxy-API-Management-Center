@@ -1682,7 +1682,10 @@
     "ledger_not_loaded": "Ещё не загружено. Обновите, чтобы увидеть итоги.",
     "ledger_no_limits": "Лимиты квот не получены",
     "ledger_available": "доступно",
-    "ledger_renews": "продление"
+    "ledger_renews": "продление",
+    "ledger_show_all": "Показать все",
+    "ledger_first_expiry": "Первый истекает",
+    "ledger_reset_refills": "Сбрасывает: {{limits}}"
   },
   "plugin_management": {
     "title": "Управление плагинами",

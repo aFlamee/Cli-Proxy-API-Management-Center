@@ -1671,7 +1671,10 @@
     "ledger_not_loaded": "尚未加载，刷新后查看汇总。",
     "ledger_no_limits": "未返回额度限制",
     "ledger_available": "可用",
-    "ledger_renews": "续订于"
+    "ledger_renews": "续订于",
+    "ledger_show_all": "查看全部",
+    "ledger_first_expiry": "最早到期",
+    "ledger_reset_refills": "可重置：{{limits}}"
   },
   "plugin_management": {
     "title": "插件管理",

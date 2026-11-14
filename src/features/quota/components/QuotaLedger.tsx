@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { IconRefreshCw } from '@/components/ui/icons';
+import { Modal } from '@/components/ui/Modal';
 import { useNow } from '@/hooks/useNow';
 import type { ResolvedTheme } from '@/types';
 import { formatInstantShort, formatRelativeInstant, resolveQuotaErrorMessage } from '@/utils/quota';
@@ -17,7 +18,9 @@ import { getTypeLabel } from '@/features/authFiles/constants';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
 import type { QuotaProviderType } from '../providers/types';
 import { isQuotaRefreshDisabled, type QuotaFileEntry } from '../logic';
+import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
 import {
+  buildClaudeResetDetail,
   buildLedgerDetails,
   buildLedgerMeters,
   ledgerColumns,
@@ -287,11 +290,24 @@ function CredentialRow({
   now: number;
 }) {
   const { t, i18n } = useTranslation();
-  const { entry, quota, meters, details } = row;
+  const { entry, quota, meters } = row;
   const adapter = QUOTA_ADAPTERS[entry.type];
   const status = quota?.status ?? 'idle';
   const loading = status === 'loading';
-  const name = getQuotaDisplayName(entry.file);
+  const fileName = getQuotaDisplayName(entry.file);
+  const name = showEmails ? fileName : maskEmails(fileName);
+  // Claude's reset grants are read per credential, apart from its quota.
+  const claudeReset = useClaudeResetGrants(
+    entry.file,
+    entry.type === 'claude' && status !== 'idle',
+    !canRefresh || loading || resetting,
+    quota,
+    onRefresh
+  );
+  const details =
+    entry.type === 'claude' && status === 'success'
+      ? [buildClaudeResetDetail(claudeReset.count, claudeReset.grants, claudeReset.message, t)]
+      : row.details;
   const identity = ledgerIdentity(entry.type, quota, t);
   const showReset =
     status === 'success' &&
@@ -347,7 +363,13 @@ function CredentialRow({
           );
         })}
         {details.map((detail) => (
-          <DetailCell key={detail.id} detail={detail} now={now} locale={i18n.resolvedLanguage} />
+          <DetailCell
+            key={detail.id}
+            detail={detail}
+            credential={name}
+            now={now}
+            locale={i18n.resolvedLanguage}
+          />
         ))}
       </div>
     );
@@ -357,7 +379,7 @@ function CredentialRow({
     <li className={styles.row}>
       <div className={styles.identity}>
         <span className={styles.fileName} title={showEmails ? name : undefined}>
-          {showEmails ? name : maskEmails(name)}
+          {name}
         </span>
         <span className={styles.plan}>
           <span className={identity.premium ? styles.planPremium : undefined}>
@@ -442,20 +464,37 @@ function MeterCell({
   );
 }
 
-/** "Manual resets · 2 available · Reset 1 · in 22 days · 10/03, 17:02" as one column. */
+/**
+ * "Manual resets · 2 available · Reset 1 · in 22 days · 10/03, 17:02" as one column,
+ * as wide as its text. A detail holding resets opens the list of all of them.
+ */
 function DetailCell({
   detail,
+  credential,
   now,
   locale,
 }: {
   detail: LedgerDetail;
+  credential: string;
   now: number;
   locale: string | undefined;
 }) {
+  const { t } = useTranslation();
+  const [listOpen, setListOpen] = useState(false);
   return (
-    <div className={styles.meter}>
+    <div className={`${styles.meter} ${styles.detail}`}>
       <div className={`${styles.meterHead} ${styles.detailHead}`}>
         <span className={styles.meterLabel}>{detail.label}</span>
+        {detail.resets.length > 0 && (
+          <button
+            type="button"
+            className={styles.detailToggle}
+            aria-haspopup="dialog"
+            onClick={() => setListOpen(true)}
+          >
+            {t('quota_management.ledger_show_all')}
+          </button>
+        )}
       </div>
       <div className={styles.detailValue}>
         <strong>{detail.value}</strong>
@@ -476,6 +515,31 @@ function DetailCell({
           )}
         </div>
       )}
+      <Modal open={listOpen} onClose={() => setListOpen(false)} title={detail.label}>
+        <div className={styles.fileName}>{credential}</div>
+        <ul className={styles.resetList}>
+          {detail.resets.map((reset) => (
+            <li key={reset.id} className={styles.resetItem}>
+              <div className={styles.resetItemName}>
+                <span className={styles.resetItemLabel}>{reset.label}</span>
+                {reset.note && <span className={styles.resetItemNote}>{reset.note}</span>}
+              </div>
+              {reset.expiresAtMs === null ? (
+                <span className={styles.resetItemNote}>{t('claude_reset.expiry_unknown')}</span>
+              ) : (
+                <div className={styles.resetItemExpiry}>
+                  <span className={styles.resetItemLabel}>
+                    {formatRelativeInstant(reset.expiresAtMs, now, locale)}
+                  </span>
+                  <span className={styles.resetItemNote}>
+                    {t('claude_reset.ends', { date: formatInstantShort(reset.expiresAtMs) })}
+                  </span>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      </Modal>
     </div>
   );
 }
